@@ -90,6 +90,7 @@
 #endif  // !Display_DISABLE_ALL
 
 #include "simple_peripheral.h"
+#include "GUA_Led.h"
 
 
 
