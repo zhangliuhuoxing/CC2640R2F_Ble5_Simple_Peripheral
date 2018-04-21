@@ -688,6 +688,8 @@ static void SimpleBLEPeripheral_init(void)
 
   // Start the GAPRole
   VOID GAPRole_StartDevice(&SimpleBLEPeripheral_gapRoleCBs);
+
+  GUA_Led_Set(GUA_LED_NO_ALL, GUA_LED_MODE_ON);
 }
 
 /*********************************************************************
