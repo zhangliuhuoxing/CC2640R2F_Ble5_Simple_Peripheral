@@ -91,6 +91,7 @@
 
 #include "simple_peripheral.h"
 #include "GUA_Led.h"
+#include "GUA_Key.h"
 
 
 
@@ -357,6 +358,8 @@ void SimpleBLEPeripheral_processOadWriteCB(uint8_t event, uint16_t connHandle,
 void SimpleBLEPeripheral_keyChangeHandler(uint8 keys);
 static void SimpleBLEPeripheral_handleKeys(uint8_t keys);
 #endif  // !Display_DISABLE_ALL
+
+static void GUA_HandleKeys(uint8 GUA_Keys);
 
 /*********************************************************************
  * EXTERN FUNCTIONS
@@ -676,7 +679,7 @@ static void SimpleBLEPeripheral_init(void)
   tbm_initTwoBtnMenu(dispHandle, &sbpMenuMain, 3, NULL);
 
   // Init key debouncer
-  Board_initKeys(SimpleBLEPeripheral_keyChangeHandler);
+//  Board_initKeys(SimpleBLEPeripheral_keyChangeHandler);
 #endif  // !Display_DISABLE_ALL
 
 #if !defined (USE_LL_CONN_PARAM_UPDATE)
@@ -691,6 +694,7 @@ static void SimpleBLEPeripheral_init(void)
   VOID GAPRole_StartDevice(&SimpleBLEPeripheral_gapRoleCBs);
 
   GUA_Led_Set(GUA_LED_NO_ALL, GUA_LED_MODE_ON);
+  GUA_initKeys(GUA_HandleKeys);
 }
 
 /*********************************************************************
@@ -1558,6 +1562,22 @@ bool SimpleBLEPeripheral_doSetPhy(uint8 index)
   return true;
 }
 #endif  // !Display_DISABLE_ALL
+
+static void GUA_HandleKeys(uint8 GUA_Keys)
+{
+    //LEFT 按键
+    if(GUA_Keys & GUA_KEY_LEFT_VALUE)
+    {
+        //LED
+        GUA_Led_Set(GUA_LED_NO_1, GUA_LED_MODE_TOGGLE); //LED1 取反一次
+    }
+    //RIGHT 按键
+    if(GUA_Keys & GUA_KEY_RIGHT_VALUE)
+    {
+        //LED
+        GUA_Led_Set(GUA_LED_NO_2, GUA_LED_MODE_TOGGLE); //LED2 取反一次
+    }
+}
 
 /*********************************************************************
 *********************************************************************/
