@@ -359,7 +359,18 @@ void SimpleBLEPeripheral_keyChangeHandler(uint8 keys);
 static void SimpleBLEPeripheral_handleKeys(uint8_t keys);
 #endif  // !Display_DISABLE_ALL
 
+//GUA
+#define SBP_GUA_PERIODIC_EVT Event_Id_02 //周期事件
+#define SBP_GUA_ALL_EVENTS SBP_GUA_PERIODIC_EVT //所有事件的集合
+
+#define SBP_GUA_PERIODIC_EVT_PERIOD 1000 //定时周期
+
+static Clock_Struct GUA_periodicClock;
+
 static void GUA_HandleKeys(uint8 GUA_Keys);
+static void GUA_performPeriodicTask(void);
+static void SimpleBLECentral_GUAHandler(UArg a0);
+//GUA
 
 /*********************************************************************
  * EXTERN FUNCTIONS
@@ -693,8 +704,14 @@ static void SimpleBLEPeripheral_init(void)
   // Start the GAPRole
   VOID GAPRole_StartDevice(&SimpleBLEPeripheral_gapRoleCBs);
 
+  //GUA
   GUA_Led_Set(GUA_LED_NO_ALL, GUA_LED_MODE_ON);
   GUA_initKeys(GUA_HandleKeys);
+
+  //初始化定时器
+  Util_constructClock(&GUA_periodicClock, SimpleBLECentral_GUAHandler,
+                      SBP_GUA_PERIODIC_EVT_PERIOD, SBP_GUA_PERIODIC_EVT_PERIOD, false, SBP_GUA_PERIODIC_EVT);
+  //GUA
 }
 
 /*********************************************************************
@@ -719,8 +736,13 @@ static void SimpleBLEPeripheral_taskFxn(UArg a0, UArg a1)
     // Waits for an event to be posted associated with the calling thread.
     // Note that an event associated with a thread is posted when a
     // message is queued to the message receive queue of the thread
-    events = Event_pend(syncEvent, Event_Id_NONE, SBP_ALL_EVENTS,
+//    events = Event_pend(syncEvent, Event_Id_NONE, SBP_ALL_EVENTS,
+//                        ICALL_TIMEOUT_FOREVER);
+
+    //GUA
+    events = Event_pend(syncEvent, Event_Id_NONE, SBP_ALL_EVENTS | SBP_GUA_ALL_EVENTS,
                         ICALL_TIMEOUT_FOREVER);
+    //GUA
 
     if (events)
     {
@@ -812,6 +834,17 @@ static void SimpleBLEPeripheral_taskFxn(UArg a0, UArg a1)
         }
       }
 #endif //FEATURE_OAD
+
+      //GUA
+      //周期事件
+      if (events & SBP_GUA_PERIODIC_EVT)
+      {
+          //再次启动定时器
+          Util_startClock(&GUA_periodicClock);
+          //周期处理函数
+          GUA_performPeriodicTask();
+      }
+      //GUA
     }
   }
 }
@@ -1569,15 +1602,29 @@ static void GUA_HandleKeys(uint8 GUA_Keys)
     if(GUA_Keys & GUA_KEY_LEFT_VALUE)
     {
         //LED
-        GUA_Led_Set(GUA_LED_NO_1, GUA_LED_MODE_TOGGLE); //LED1 取反一次
+        GUA_Led_Set(GUA_LED_NO_1, GUA_LED_MODE_ON); //LED1 取反一次
+        //启动定时器
+        Util_startClock(&GUA_periodicClock);
     }
     //RIGHT 按键
     if(GUA_Keys & GUA_KEY_RIGHT_VALUE)
     {
         //LED
-        GUA_Led_Set(GUA_LED_NO_2, GUA_LED_MODE_TOGGLE); //LED2 取反一次
+        GUA_Led_Set(GUA_LED_NO_2, GUA_LED_MODE_ON); //LED2 取反一次
+        //启动定时器
+        Util_startClock(&GUA_periodicClock);
     }
 }
 
+static void GUA_performPeriodicTask(void)
+{
+    GUA_Led_Set(GUA_LED_NO_ALL, GUA_LED_MODE_TOGGLE); //LED反转
+}
+
+static void SimpleBLECentral_GUAHandler(UArg a0)
+{
+    Event_post(syncEvent, a0);
+}
+//GUA
 /*********************************************************************
 *********************************************************************/
