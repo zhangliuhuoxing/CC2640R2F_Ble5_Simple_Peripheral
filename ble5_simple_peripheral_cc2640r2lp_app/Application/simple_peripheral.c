@@ -722,6 +722,8 @@ static void SimpleBLEPeripheral_init(void)
   VOID GAPRole_StartDevice(&SimpleBLEPeripheral_gapRoleCBs);
 
   //GUA
+  HCI_EXT_SetTxPowerCmd(HCI_EXT_TX_POWER_5_DBM);
+
   GUA_Led_Set(GUA_LED_NO_ALL, GUA_LED_MODE_ON);
   GUA_initKeys(GUA_HandleKeys);
 
@@ -741,8 +743,9 @@ static void SimpleBLEPeripheral_init(void)
   GUAProfile_AddService(GATT_ALL_SERVICES);
   //初始化特征值
   uint8 GUAProfile_Char1Value[GUAPROFILE_CHAR1_LEN] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2,
+  3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2,
   3, 4, 5, 6, 7, 8, 9};
-  GUAProfile_SetParameter(GUAPROFILE_CHAR1, GUAPROFILE_CHAR1_LEN, &GUAProfile_Char1Value);
+//  GUAProfile_SetParameter(GUAPROFILE_CHAR1, GUAPROFILE_CHAR1_LEN, &GUAProfile_Char1Value);
   //添加回调函数
   VOID GUAProfile_RegisterAppCBs(&simpleBLEPeripheral_GUAProfileCBs);
   //GUA
