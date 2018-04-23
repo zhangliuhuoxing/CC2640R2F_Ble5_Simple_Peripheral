@@ -95,6 +95,7 @@
 #include "GUA_UART.h"
 #include "GUA_Profile.h"
 #include "My_PWM.h"
+#include "My_ADC.h"
 
 /*********************************************************************
  * CONSTANTS
@@ -749,6 +750,7 @@ static void SimpleBLEPeripheral_init(void)
   VOID GUAProfile_RegisterAppCBs(&simpleBLEPeripheral_GUAProfileCBs);
 
   My_PWM_init();
+  My_ADC_init();
   //GUA
 }
 
@@ -881,6 +883,10 @@ static void SimpleBLEPeripheral_taskFxn(UArg a0, UArg a1)
           //Util_startClock(&GUA_periodicClock);
           //周期处理函数
           GUA_performPeriodicTask();
+          adc_value = My_ADC_Get(adc);
+
+          micro_volt = ADC_convertToMicroVolts(adc, adc_value);
+
       }
 
       //串口处理事件
@@ -1674,7 +1680,7 @@ bool SimpleBLEPeripheral_doSetPhy(uint8 index)
 
 static void GUA_HandleKeys(uint8 GUA_Keys)
 {
-    static float pwm_duty = 0;
+//    static float pwm_duty = 0;
     //LEFT 按键
     if(GUA_Keys & GUA_KEY_LEFT_VALUE)
     {
@@ -1684,8 +1690,8 @@ static void GUA_HandleKeys(uint8 GUA_Keys)
 //        GUA_UART_Send("LEFT is pressed\r\n", 17);
 
         //启动定时器
-//        Util_startClock(&GUA_periodicClock);
-        pwm_duty++;
+        Util_startClock(&GUA_periodicClock);
+        g_pwm_duty++;
     }
     //RIGHT 按键
     if(GUA_Keys & GUA_KEY_RIGHT_VALUE)
@@ -1696,11 +1702,11 @@ static void GUA_HandleKeys(uint8 GUA_Keys)
 //        GUA_UART_Send("RIGHT is pressed\r\n", 18);
 
         //启动定时器
-//        Util_startClock(&GUA_periodicClock);
-        pwm_duty--;
+        Util_startClock(&GUA_periodicClock);
+        g_pwm_duty--;
     }
 
-    PWM_setDuty(pwm, (PWM_DUTY_FRACTION_MAX * pwm_duty / 100));
+    PWM_setDuty(pwm, (PWM_DUTY_FRACTION_MAX * g_pwm_duty / 100));
 }
 
 static void GUA_performPeriodicTask(void)

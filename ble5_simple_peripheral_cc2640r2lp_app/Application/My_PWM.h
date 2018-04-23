@@ -7,6 +7,7 @@
 #endif
 
 extern PWM_Handle pwm;
+extern float g_pwm_duty;
 
 PWM_STATUS My_PWM_init(void);
 

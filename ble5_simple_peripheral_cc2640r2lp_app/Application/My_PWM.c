@@ -9,6 +9,7 @@
 #include "My_PWM.h"
 
 PWM_Handle pwm;
+float g_pwm_duty = 0;
 
 // Initialize the PWM driver.
 PWM_STATUS My_PWM_init(void)

@@ -52,6 +52,7 @@ extern "C" {
 
 #define Board_ADC0              CC2640R2_LAUNCHXL_ADCVSS
 #define Board_ADC1              CC2640R2_LAUNCHXL_ADCVDDS
+#define Board_ADC2              CC2640R2_LAUNCHXL_ADCBUF0CHANNEL0
 
 #define Board_ADCBUF0           CC2640R2_LAUNCHXL_ADCBUF0
 #define Board_ADCBUFCHANNEL0    0
