@@ -93,6 +93,7 @@
 #include "GUA_Led.h"
 #include "GUA_Key.h"
 #include "GUA_UART.h"
+#include "GUA_Profile.h"
 
 
 
@@ -367,6 +368,9 @@ static void SimpleBLEPeripheral_handleKeys(uint8_t keys);
 
 #define SBP_GUA_PERIODIC_EVT_PERIOD 1000 //定时周期
 
+#define SBP_GUA_CHAR_CHANGE_EVT 0x0010
+
+//GUA Profile Callbacks
 static Clock_Struct GUA_periodicClock;
 static Clock_Struct GUA_UART_Clock;
 
@@ -375,6 +379,14 @@ static void GUA_performPeriodicTask(void);
 static void SimpleBLECentral_GUAHandler(UArg a0);
 static void GUA_UART_ReadCallback(UART_Handle nGUA_UART_Handle, void *npGUA_UART_RxBuf, size_t nGUA_UART_Size);
 static void GUA_UART_PerformTask(void);
+static void GUA_Profile_ChangeCB(GUA_U8 nGUA_ParamID);
+static void GUA_Profile_CharValueChangeEvt(GUA_U8 nGUA_ParamID);
+
+static GUAProfileCBs_t simpleBLEPeripheral_GUAProfileCBs =
+{
+     GUA_Profile_ChangeCB // Charactersitic value change callback
+};
+
 //GUA
 
 /*********************************************************************
@@ -717,13 +729,22 @@ static void SimpleBLEPeripheral_init(void)
   Util_constructClock(&GUA_periodicClock, SimpleBLECentral_GUAHandler,
                       SBP_GUA_PERIODIC_EVT_PERIOD, SBP_GUA_PERIODIC_EVT_PERIOD, false, SBP_GUA_PERIODIC_EVT);
 
-  //串口初始化
-  GUA_UART_Init(GUA_UART_ReadCallback);
-  GUA_UART_Send("Hello world\r\n", 9);
-  GUA_UART_Send("Walker\r\n", 19);
-  //串口处理定时器初始化
-  Util_constructClock(&GUA_UART_Clock, SimpleBLEPeripheral_clockHandler,
-  0, 0, false, SBP_GUA_UART_EVT);
+//  //串口初始化
+//  GUA_UART_Init(GUA_UART_ReadCallback);
+//  GUA_UART_Send("Hello world\r\n", 9);
+//  GUA_UART_Send("Walker\r\n", 19);
+//  //串口处理定时器初始化
+//  Util_constructClock(&GUA_UART_Clock, SimpleBLEPeripheral_clockHandler,
+//  0, 0, false, SBP_GUA_UART_EVT);
+
+  //增加服务
+  GUAProfile_AddService(GATT_ALL_SERVICES);
+  //初始化特征值
+  uint8 GUAProfile_Char1Value[GUAPROFILE_CHAR1_LEN] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2,
+  3, 4, 5, 6, 7, 8, 9};
+  GUAProfile_SetParameter(GUAPROFILE_CHAR1, GUAPROFILE_CHAR1_LEN, &GUAProfile_Char1Value);
+  //添加回调函数
+  VOID GUAProfile_RegisterAppCBs(&simpleBLEPeripheral_GUAProfileCBs);
   //GUA
 }
 
@@ -1135,29 +1156,58 @@ static void SimpleBLEPeripheral_freeAttRsp(uint8_t status)
  *
  * @return  None.
  */
+//static void SimpleBLEPeripheral_processAppMsg(sbpEvt_t *pMsg)
+//{
+//  switch (pMsg->hdr.event)
+//  {
+//    case SBP_STATE_CHANGE_EVT:
+//      SimpleBLEPeripheral_processStateChangeEvt((gaprole_States_t)pMsg->
+//                                                hdr.state);
+//      break;
+//
+//    case SBP_CHAR_CHANGE_EVT:
+//      SimpleBLEPeripheral_processCharValueChangeEvt(pMsg->hdr.state);
+//      break;
+//
+//#if !defined(Display_DISABLE_ALL)
+//    case SBP_KEY_CHANGE_EVT:
+//      SimpleBLEPeripheral_handleKeys(pMsg->hdr.state);
+//      break;
+//#endif  // !Display_DISABLE_ALL
+//
+//    default:
+//      // Do nothing.
+//      break;
+//  }
+//}
+
 static void SimpleBLEPeripheral_processAppMsg(sbpEvt_t *pMsg)
 {
-  switch (pMsg->hdr.event)
-  {
-    case SBP_STATE_CHANGE_EVT:
-      SimpleBLEPeripheral_processStateChangeEvt((gaprole_States_t)pMsg->
-                                                hdr.state);
-      break;
+    switch (pMsg->hdr.event)
+    {
+        case SBP_STATE_CHANGE_EVT:
+            SimpleBLEPeripheral_processStateChangeEvt((gaprole_States_t)pMsg->
+            hdr.state);
+        break;
 
-    case SBP_CHAR_CHANGE_EVT:
-      SimpleBLEPeripheral_processCharValueChangeEvt(pMsg->hdr.state);
-      break;
+        case SBP_CHAR_CHANGE_EVT:
+            SimpleBLEPeripheral_processCharValueChangeEvt(pMsg->hdr.state);
+        break;
 
-#if !defined(Display_DISABLE_ALL)
-    case SBP_KEY_CHANGE_EVT:
-      SimpleBLEPeripheral_handleKeys(pMsg->hdr.state);
-      break;
-#endif  // !Display_DISABLE_ALL
+        #if !defined(Display_DISABLE_ALL)
+        case SBP_KEY_CHANGE_EVT:
+            SimpleBLEPeripheral_handleKeys(pMsg->hdr.state);
+        break;
+        #endif // !Display_DISABLE_ALL
 
-    default:
-      // Do nothing.
-      break;
-  }
+        case SBP_GUA_CHAR_CHANGE_EVT:
+            GUA_Profile_CharValueChangeEvt(pMsg->hdr.state);
+        break;
+
+        default:
+        // Do nothing.
+        break;
+    }
 }
 
 /*********************************************************************
@@ -1669,6 +1719,39 @@ static void GUA_UART_PerformTask(void)
     GUA_UART_Send(gaGUA_UART_RxBuf, gGUA_UART_Size);
     //开始新一次的读取等待
     GUA_UART_Receive(gaGUA_UART_RxBuf, gGUA_UART_WantedRxBytes);
+}
+
+static void GUA_Profile_ChangeCB(GUA_U8 nGUA_ParamID)
+{
+    SimpleBLEPeripheral_enqueueMsg(SBP_GUA_CHAR_CHANGE_EVT, nGUA_ParamID);
+}
+
+static void GUA_Profile_CharValueChangeEvt(GUA_U8 nGUA_ParamID)
+{
+    GUA_U16 nGUA_ConnHandle;
+    GUA_U8 naGUA_Buf[20] = {0};
+    GUA_U8 *pGUA_Value = naGUA_Buf;
+    //判断是哪个特征值
+    switch(nGUA_ParamID)
+    {
+        //特征值 1
+        case GUAPROFILE_CHAR1:
+        {
+            //获取连接句柄
+            GAPRole_GetParameter(GAPROLE_CONNHANDLE, &nGUA_ConnHandle);
+            //写一个 20 字节的测试缓冲区的数据
+            for(GUA_U8 i = 0; i < 20; i++)
+            {
+                *(pGUA_Value + i) = i;
+            }
+            //发送数据
+            GUA_Profile_Notify(GUAPROFILE_CHAR1, nGUA_ConnHandle, pGUA_Value, 20);
+            break;
+        }
+        //其他
+        default:
+        break;
+    }
 }
 //GUA
 /*********************************************************************
