@@ -92,6 +92,7 @@
 #include "simple_peripheral.h"
 #include "GUA_Led.h"
 #include "GUA_Key.h"
+#include "GUA_UART.h"
 
 
 
@@ -361,15 +362,19 @@ static void SimpleBLEPeripheral_handleKeys(uint8_t keys);
 
 //GUA
 #define SBP_GUA_PERIODIC_EVT Event_Id_02 //周期事件
-#define SBP_GUA_ALL_EVENTS SBP_GUA_PERIODIC_EVT //所有事件的集合
+#define SBP_GUA_UART_EVT Event_Id_03     //串口事件
+#define SBP_GUA_ALL_EVENTS (SBP_GUA_PERIODIC_EVT | SBP_GUA_UART_EVT) //所有事件的集合
 
 #define SBP_GUA_PERIODIC_EVT_PERIOD 1000 //定时周期
 
 static Clock_Struct GUA_periodicClock;
+static Clock_Struct GUA_UART_Clock;
 
 static void GUA_HandleKeys(uint8 GUA_Keys);
 static void GUA_performPeriodicTask(void);
 static void SimpleBLECentral_GUAHandler(UArg a0);
+static void GUA_UART_ReadCallback(UART_Handle nGUA_UART_Handle, void *npGUA_UART_RxBuf, size_t nGUA_UART_Size);
+static void GUA_UART_PerformTask(void);
 //GUA
 
 /*********************************************************************
@@ -711,6 +716,14 @@ static void SimpleBLEPeripheral_init(void)
   //初始化定时器
   Util_constructClock(&GUA_periodicClock, SimpleBLECentral_GUAHandler,
                       SBP_GUA_PERIODIC_EVT_PERIOD, SBP_GUA_PERIODIC_EVT_PERIOD, false, SBP_GUA_PERIODIC_EVT);
+
+  //串口初始化
+  GUA_UART_Init(GUA_UART_ReadCallback);
+  GUA_UART_Send("Hello world\r\n", 9);
+  GUA_UART_Send("Walker\r\n", 19);
+  //串口处理定时器初始化
+  Util_constructClock(&GUA_UART_Clock, SimpleBLEPeripheral_clockHandler,
+  0, 0, false, SBP_GUA_UART_EVT);
   //GUA
 }
 
@@ -840,9 +853,18 @@ static void SimpleBLEPeripheral_taskFxn(UArg a0, UArg a1)
       if (events & SBP_GUA_PERIODIC_EVT)
       {
           //再次启动定时器
-          Util_startClock(&GUA_periodicClock);
+          //Util_startClock(&GUA_periodicClock);
           //周期处理函数
           GUA_performPeriodicTask();
+      }
+
+      //串口处理事件
+      if (events & SBP_GUA_UART_EVT)
+      {
+          //再次启动定时器
+          //Util_startClock(&GUA_periodicClock);
+          //串口处理函数
+          GUA_UART_PerformTask();
       }
       //GUA
     }
@@ -1603,6 +1625,9 @@ static void GUA_HandleKeys(uint8 GUA_Keys)
     {
         //LED
         GUA_Led_Set(GUA_LED_NO_1, GUA_LED_MODE_ON); //LED1 取反一次
+
+        GUA_UART_Send("LEFT is pressed\r\n", 17);
+
         //启动定时器
         Util_startClock(&GUA_periodicClock);
     }
@@ -1611,6 +1636,9 @@ static void GUA_HandleKeys(uint8 GUA_Keys)
     {
         //LED
         GUA_Led_Set(GUA_LED_NO_2, GUA_LED_MODE_ON); //LED2 取反一次
+
+        GUA_UART_Send("RIGHT is pressed\r\n", 18);
+
         //启动定时器
         Util_startClock(&GUA_periodicClock);
     }
@@ -1624,6 +1652,23 @@ static void GUA_performPeriodicTask(void)
 static void SimpleBLECentral_GUAHandler(UArg a0)
 {
     Event_post(syncEvent, a0);
+}
+
+static void GUA_UART_ReadCallback(UART_Handle nGUA_UART_Handle, void *npGUA_UART_RxBuf, size_t nGUA_UART_Size)
+{
+    //保存数据
+    gGUA_UART_Size = nGUA_UART_Size;
+    memcpy(gaGUA_UART_RxBuf, npGUA_UART_RxBuf, gGUA_UART_Size);
+    //启动定时器
+    Util_startClock(&GUA_UART_Clock);
+}
+
+static void GUA_UART_PerformTask(void)
+{
+    //发送数据
+    GUA_UART_Send(gaGUA_UART_RxBuf, gGUA_UART_Size);
+    //开始新一次的读取等待
+    GUA_UART_Receive(gaGUA_UART_RxBuf, gGUA_UART_WantedRxBytes);
 }
 //GUA
 /*********************************************************************
