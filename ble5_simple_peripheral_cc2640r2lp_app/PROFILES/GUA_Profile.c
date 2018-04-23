@@ -213,14 +213,14 @@ bStatus_t GUAProfile_SetParameter( uint8 param, uint8 len, void *pValue )
     switch ( param )
     {
         case GUAPROFILE_CHAR1:
-        if ( len == GUAPROFILE_CHAR1_LEN )
-        {
-            VOID memcpy( GUAProfile_Char1, pValue, GUAPROFILE_CHAR1_LEN );
-        }
-        else
-        {
-            ret = bleInvalidRange;
-        }
+            if ( len == GUAPROFILE_CHAR1_LEN )
+            {
+                VOID memcpy( GUAProfile_Char1, pValue, GUAPROFILE_CHAR1_LEN );
+            }
+            else
+            {
+                ret = bleInvalidRange;
+            }
         break;
         default:
             ret = INVALIDPARAMETER;
