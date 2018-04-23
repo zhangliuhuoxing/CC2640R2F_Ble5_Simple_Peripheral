@@ -94,8 +94,7 @@
 #include "GUA_Key.h"
 #include "GUA_UART.h"
 #include "GUA_Profile.h"
-
-
+#include "My_PWM.h"
 
 /*********************************************************************
  * CONSTANTS
@@ -724,7 +723,7 @@ static void SimpleBLEPeripheral_init(void)
   //GUA
   HCI_EXT_SetTxPowerCmd(HCI_EXT_TX_POWER_5_DBM);
 
-  GUA_Led_Set(GUA_LED_NO_ALL, GUA_LED_MODE_ON);
+//  GUA_Led_Set(GUA_LED_NO_ALL, GUA_LED_MODE_ON);
   GUA_initKeys(GUA_HandleKeys);
 
   //初始化定时器
@@ -748,6 +747,8 @@ static void SimpleBLEPeripheral_init(void)
 //  GUAProfile_SetParameter(GUAPROFILE_CHAR1, GUAPROFILE_CHAR1_LEN, &GUAProfile_Char1Value);
   //添加回调函数
   VOID GUAProfile_RegisterAppCBs(&simpleBLEPeripheral_GUAProfileCBs);
+
+  My_PWM_init();
   //GUA
 }
 
@@ -1673,33 +1674,38 @@ bool SimpleBLEPeripheral_doSetPhy(uint8 index)
 
 static void GUA_HandleKeys(uint8 GUA_Keys)
 {
+    static float pwm_duty = 0;
     //LEFT 按键
     if(GUA_Keys & GUA_KEY_LEFT_VALUE)
     {
         //LED
-        GUA_Led_Set(GUA_LED_NO_1, GUA_LED_MODE_ON); //LED1 取反一次
+//        GUA_Led_Set(GUA_LED_NO_1, GUA_LED_MODE_ON); //LED1 取反一次
 
-        GUA_UART_Send("LEFT is pressed\r\n", 17);
+//        GUA_UART_Send("LEFT is pressed\r\n", 17);
 
         //启动定时器
-        Util_startClock(&GUA_periodicClock);
+//        Util_startClock(&GUA_periodicClock);
+        pwm_duty++;
     }
     //RIGHT 按键
     if(GUA_Keys & GUA_KEY_RIGHT_VALUE)
     {
         //LED
-        GUA_Led_Set(GUA_LED_NO_2, GUA_LED_MODE_ON); //LED2 取反一次
+//        GUA_Led_Set(GUA_LED_NO_2, GUA_LED_MODE_ON); //LED2 取反一次
 
-        GUA_UART_Send("RIGHT is pressed\r\n", 18);
+//        GUA_UART_Send("RIGHT is pressed\r\n", 18);
 
         //启动定时器
-        Util_startClock(&GUA_periodicClock);
+//        Util_startClock(&GUA_periodicClock);
+        pwm_duty--;
     }
+
+    PWM_setDuty(pwm, (PWM_DUTY_FRACTION_MAX * pwm_duty / 100));
 }
 
 static void GUA_performPeriodicTask(void)
 {
-    GUA_Led_Set(GUA_LED_NO_ALL, GUA_LED_MODE_TOGGLE); //LED反转
+//    GUA_Led_Set(GUA_LED_NO_ALL, GUA_LED_MODE_TOGGLE); //LED反转
 }
 
 static void SimpleBLECentral_GUAHandler(UArg a0)
