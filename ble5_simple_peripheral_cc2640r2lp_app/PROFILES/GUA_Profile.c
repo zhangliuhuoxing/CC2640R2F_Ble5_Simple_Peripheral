@@ -407,8 +407,7 @@ uint8 *pValue, uint16 len, uint16 offset, uint8_t method )
 // nGUA_Len:要通知的数据长度，范围为 0~SIMPLEPROFILE_CHAR6，最多 20 个字节
 //return: none
 //**********************************************************************
-void GUA_Profile_Notify(GUA_U8 nGUA_Param, GUA_U16 nGUA_ConnHandle, GUA_U8 *pGUA_Value, GUA_U8
-nGUA_Len)
+void GUA_Profile_Notify(GUA_U8 nGUA_Param, GUA_U16 nGUA_ConnHandle, GUA_U8 *pGUA_Value, GUA_U8 nGUA_Len)
 {
     attHandleValueNoti_t stGUA_Noti;
     GUA_U16 nGUA_Value;

@@ -321,7 +321,7 @@ static uint8_t advertData[] =
 };
 
 // GAP GATT Attributes
-static uint8_t attDeviceName[GAP_DEVICE_NAME_LEN] = "Simple Peripheral";
+static uint8_t attDeviceName[GAP_DEVICE_NAME_LEN] = "Peripheral";
 
 // Globals used for ATT Response retransmission
 static gattMsgEvent_t *pAttRsp = NULL;
@@ -366,7 +366,7 @@ static void SimpleBLEPeripheral_handleKeys(uint8_t keys);
 #define SBP_GUA_UART_EVT Event_Id_03     //串口事件
 #define SBP_GUA_ALL_EVENTS (SBP_GUA_PERIODIC_EVT | SBP_GUA_UART_EVT) //所有事件的集合
 
-#define SBP_GUA_PERIODIC_EVT_PERIOD 1000 //定时周期
+#define SBP_GUA_PERIODIC_EVT_PERIOD 10 //定时周期
 
 #define SBP_GUA_CHAR_CHANGE_EVT 0x0010
 
@@ -629,7 +629,7 @@ static void SimpleBLEPeripheral_init(void)
   {
     uint8_t charValue1 = 1;
     uint8_t charValue2 = 2;
-    uint8_t charValue3 = 3;
+    uint8_t charValue3 = 0xff;
     uint8_t charValue4 = 4;
     uint8_t charValue5[SIMPLEPROFILE_CHAR5_LEN] = { 1, 2, 3, 4, 5 };
 
@@ -730,26 +730,17 @@ static void SimpleBLEPeripheral_init(void)
   //初始化定时器
   Util_constructClock(&GUA_periodicClock, SimpleBLECentral_GUAHandler,
                       SBP_GUA_PERIODIC_EVT_PERIOD, SBP_GUA_PERIODIC_EVT_PERIOD, false, SBP_GUA_PERIODIC_EVT);
-
-//  //串口初始化
-//  GUA_UART_Init(GUA_UART_ReadCallback);
-//  GUA_UART_Send("Hello world\r\n", 9);
-//  GUA_UART_Send("Walker\r\n", 19);
-//  //串口处理定时器初始化
-//  Util_constructClock(&GUA_UART_Clock, SimpleBLEPeripheral_clockHandler,
-//  0, 0, false, SBP_GUA_UART_EVT);
+  Util_startClock(&GUA_periodicClock);
 
   //增加服务
   GUAProfile_AddService(GATT_ALL_SERVICES);
   //初始化特征值
   uint8 GUAProfile_Char1Value[GUAPROFILE_CHAR1_LEN] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2,
-  3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2,
-  3, 4, 5, 6, 7, 8, 9};
-//  GUAProfile_SetParameter(GUAPROFILE_CHAR1, GUAPROFILE_CHAR1_LEN, &GUAProfile_Char1Value);
+  3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
+  GUAProfile_SetParameter(GUAPROFILE_CHAR1, GUAPROFILE_CHAR1_LEN, &GUAProfile_Char1Value);
   //添加回调函数
   VOID GUAProfile_RegisterAppCBs(&simpleBLEPeripheral_GUAProfileCBs);
 
-  My_PWM_init();
   My_ADC_init();
   //GUA
 }
@@ -880,22 +871,18 @@ static void SimpleBLEPeripheral_taskFxn(UArg a0, UArg a1)
       if (events & SBP_GUA_PERIODIC_EVT)
       {
           //再次启动定时器
-          //Util_startClock(&GUA_periodicClock);
+          Util_startClock(&GUA_periodicClock);
           //周期处理函数
           GUA_performPeriodicTask();
           adc_value = My_ADC_Get(adc);
-
           micro_volt = ADC_convertToMicroVolts(adc, adc_value);
 
-      }
+          uint8_t char4_value = 0;
 
-      //串口处理事件
-      if (events & SBP_GUA_UART_EVT)
-      {
-          //再次启动定时器
-          //Util_startClock(&GUA_periodicClock);
-          //串口处理函数
-          GUA_UART_PerformTask();
+          char4_value = (uint8_t)adc_value;
+
+          SimpleProfile_SetParameter(SIMPLEPROFILE_CHAR4, sizeof(uint8_t),
+                                         &char4_value);
       }
       //GUA
     }
@@ -1680,38 +1667,21 @@ bool SimpleBLEPeripheral_doSetPhy(uint8 index)
 
 static void GUA_HandleKeys(uint8 GUA_Keys)
 {
-//    static float pwm_duty = 0;
     //LEFT 按键
     if(GUA_Keys & GUA_KEY_LEFT_VALUE)
     {
-        //LED
-//        GUA_Led_Set(GUA_LED_NO_1, GUA_LED_MODE_ON); //LED1 取反一次
 
-//        GUA_UART_Send("LEFT is pressed\r\n", 17);
-
-        //启动定时器
-        Util_startClock(&GUA_periodicClock);
-        g_pwm_duty++;
     }
     //RIGHT 按键
     if(GUA_Keys & GUA_KEY_RIGHT_VALUE)
     {
-        //LED
-//        GUA_Led_Set(GUA_LED_NO_2, GUA_LED_MODE_ON); //LED2 取反一次
 
-//        GUA_UART_Send("RIGHT is pressed\r\n", 18);
-
-        //启动定时器
-        Util_startClock(&GUA_periodicClock);
-        g_pwm_duty--;
     }
-
-    PWM_setDuty(pwm, (PWM_DUTY_FRACTION_MAX * g_pwm_duty / 100));
 }
 
 static void GUA_performPeriodicTask(void)
 {
-//    GUA_Led_Set(GUA_LED_NO_ALL, GUA_LED_MODE_TOGGLE); //LED反转
+    GUA_Led_Set(GUA_LED_NO_ALL, GUA_LED_MODE_TOGGLE); //LED反转
 }
 
 static void SimpleBLECentral_GUAHandler(UArg a0)
