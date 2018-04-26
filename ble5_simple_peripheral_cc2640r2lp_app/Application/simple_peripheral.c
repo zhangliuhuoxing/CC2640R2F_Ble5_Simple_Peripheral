@@ -366,7 +366,7 @@ static void SimpleBLEPeripheral_handleKeys(uint8_t keys);
 #define SBP_GUA_UART_EVT Event_Id_03     //串口事件
 #define SBP_GUA_ALL_EVENTS (SBP_GUA_PERIODIC_EVT | SBP_GUA_UART_EVT) //所有事件的集合
 
-#define SBP_GUA_PERIODIC_EVT_PERIOD 10 //定时周期
+#define SBP_GUA_PERIODIC_EVT_PERIOD 50 //定时周期20ms
 
 #define SBP_GUA_CHAR_CHANGE_EVT 0x0010
 
@@ -627,20 +627,20 @@ static void SimpleBLEPeripheral_init(void)
   // http://software-dl.ti.com/lprf/ble5stack-docs-latest/html/ble-stack/gatt.html#
   // http://software-dl.ti.com/lprf/ble5stack-docs-latest/html/ble-stack/gatt.html#gattservapp-module
   {
-    uint8_t charValue1 = 1;
+    uint8_t charValue1[SIMPLEPROFILE_CHAR1_LEN] = { 0x5a, 0x01, 0 , 0 , 0 };
     uint8_t charValue2 = 2;
     uint8_t charValue3 = 0xff;
-    uint8_t charValue4 = 4;
+    uint8_t charValue4[SIMPLEPROFILE_CHAR4_LEN] = { 0x5a, 0x01, 0 , 0 , 0 };
     uint8_t charValue5[SIMPLEPROFILE_CHAR5_LEN] = { 1, 2, 3, 4, 5 };
 
-    SimpleProfile_SetParameter(SIMPLEPROFILE_CHAR1, sizeof(uint8_t),
-                               &charValue1);
+    SimpleProfile_SetParameter(SIMPLEPROFILE_CHAR1, SIMPLEPROFILE_CHAR1_LEN,
+                               charValue1);
     SimpleProfile_SetParameter(SIMPLEPROFILE_CHAR2, sizeof(uint8_t),
                                &charValue2);
     SimpleProfile_SetParameter(SIMPLEPROFILE_CHAR3, sizeof(uint8_t),
                                &charValue3);
-    SimpleProfile_SetParameter(SIMPLEPROFILE_CHAR4, sizeof(uint8_t),
-                               &charValue4);
+    SimpleProfile_SetParameter(SIMPLEPROFILE_CHAR4, SIMPLEPROFILE_CHAR4_LEN,
+                               charValue4);
     SimpleProfile_SetParameter(SIMPLEPROFILE_CHAR5, SIMPLEPROFILE_CHAR5_LEN,
                                charValue5);
   }
@@ -735,8 +735,7 @@ static void SimpleBLEPeripheral_init(void)
   //增加服务
   GUAProfile_AddService(GATT_ALL_SERVICES);
   //初始化特征值
-  uint8 GUAProfile_Char1Value[GUAPROFILE_CHAR1_LEN] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2,
-  3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
+  uint8_t GUAProfile_Char1Value[GUAPROFILE_CHAR1_LEN] = {0};
   GUAProfile_SetParameter(GUAPROFILE_CHAR1, GUAPROFILE_CHAR1_LEN, &GUAProfile_Char1Value);
   //添加回调函数
   VOID GUAProfile_RegisterAppCBs(&simpleBLEPeripheral_GUAProfileCBs);
@@ -874,15 +873,6 @@ static void SimpleBLEPeripheral_taskFxn(UArg a0, UArg a1)
           Util_startClock(&GUA_periodicClock);
           //周期处理函数
           GUA_performPeriodicTask();
-          adc_value = My_ADC_Get(adc);
-          micro_volt = ADC_convertToMicroVolts(adc, adc_value);
-
-          uint8_t char4_value = 0;
-
-          char4_value = (uint8_t)adc_value;
-
-          SimpleProfile_SetParameter(SIMPLEPROFILE_CHAR4, sizeof(uint8_t),
-                                         &char4_value);
       }
       //GUA
     }
@@ -1478,8 +1468,8 @@ static void SimpleBLEPeripheral_performPeriodicTask(void)
     // Note that if notifications of the fourth characteristic have been
     // enabled by a GATT client device, then a notification will be sent
     // every time this function is called.
-    SimpleProfile_SetParameter(SIMPLEPROFILE_CHAR4, sizeof(uint8_t),
-                               &valueToCopy);
+//    SimpleProfile_SetParameter(SIMPLEPROFILE_CHAR4, SIMPLEPROFILE_CHAR4_LEN,
+//                               &valueToCopy);
   }
 #endif //!FEATURE_OAD_ONCHIP
 }
@@ -1681,7 +1671,25 @@ static void GUA_HandleKeys(uint8 GUA_Keys)
 
 static void GUA_performPeriodicTask(void)
 {
+    float SpeedValue = 0;
     GUA_Led_Set(GUA_LED_NO_ALL, GUA_LED_MODE_TOGGLE); //LED反转
+
+    adc_value = My_ADC_Get(adc);
+
+    SpeedValue = (adc_value - 777) * 1.0 / (2339 - 777);
+    adc_value = SpeedValue * 10000;
+
+    uint8_t char4_value[SIMPLEPROFILE_CHAR4_LEN] = { 0xa5, 0x01, 0, 0, 0 };
+    *(uint16_t *)(&char4_value[2]) = adc_value;
+
+    char4_value[4] = 0;
+    for(uint8_t i = 0; i < 4; i++)
+    {
+        char4_value[4] ^=  char4_value[i];
+    }
+
+    SimpleProfile_SetParameter(SIMPLEPROFILE_CHAR4, SIMPLEPROFILE_CHAR4_LEN,
+                               char4_value);
 }
 
 static void SimpleBLECentral_GUAHandler(UArg a0)

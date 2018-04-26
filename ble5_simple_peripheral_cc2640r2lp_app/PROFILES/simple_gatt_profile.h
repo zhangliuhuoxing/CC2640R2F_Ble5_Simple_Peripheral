@@ -84,6 +84,10 @@ extern "C"
 // Length of Characteristic 5 in bytes
 #define SIMPLEPROFILE_CHAR5_LEN           5
 
+// Length of Characteristic 4 in bytes
+#define SIMPLEPROFILE_CHAR4_LEN           5
+#define SIMPLEPROFILE_CHAR1_LEN           5
+
 /*********************************************************************
  * TYPEDEFS
  */
