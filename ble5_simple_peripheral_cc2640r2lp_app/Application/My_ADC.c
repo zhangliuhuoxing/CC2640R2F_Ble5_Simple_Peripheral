@@ -19,7 +19,8 @@ int8_t My_ADC_init(void)
     ADC_init();
     ADC_Params_init(&params);
     adc = ADC_open(Board_ADC2, &params); //Board_ADCCHANNEL_A0
-    if (adc == NULL) {
+    if (adc == NULL)
+    {
         // ADC_open() failed
         return -1;
     }
@@ -32,10 +33,13 @@ uint16_t My_ADC_Get(ADC_Handle ADCn)
     int_fast16_t res;
     uint16_t adcValue;
     res = ADC_convert(adc, &adcValue);
-    if (res == ADC_STATUS_SUCCESS) {
-        //use adcValue
-        return adcValue;
+    if (res == ADC_STATUS_ERROR)
+    {
+        //ADC_convert() failed
+        return -1;
     }
+
+    return adcValue;
 }
 
 
