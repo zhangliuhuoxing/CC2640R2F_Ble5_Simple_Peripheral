@@ -4,7 +4,6 @@
 #include <ti/sysbios/BIOS.h>
 #include "board.h"
 #include <ti/drivers/power/PowerCC26XX.h>
-#include <ti/drivers/ADC.h>
 
 #include "My_ADC.h"
 
@@ -18,11 +17,13 @@ int8_t My_ADC_init(void)
     ADC_Params params;
     ADC_init();
     ADC_Params_init(&params);
-    adc = ADC_open(Board_ADC2, &params); //Board_ADCCHANNEL_A0
+    adc = ADC_open(Board_ADC1, &params); //Board_ADCCHANNEL_A0
     if (adc == NULL) {
         // ADC_open() failed
         return -1;
     }
+
+    adc_value = My_ADC_Get(adc);
 
     return 0;
 }

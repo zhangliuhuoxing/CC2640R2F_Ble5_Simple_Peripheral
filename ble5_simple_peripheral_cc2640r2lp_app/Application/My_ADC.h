@@ -1,5 +1,8 @@
 #ifndef _My_ADC_H_
 #define _My_ADC_H_
+
+#include <ti/drivers/ADC.h>
+
 /*********************∫Í∂®“Â************************/
 
 extern ADC_Handle adc;

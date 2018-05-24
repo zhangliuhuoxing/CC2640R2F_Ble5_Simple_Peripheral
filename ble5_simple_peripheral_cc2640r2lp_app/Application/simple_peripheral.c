@@ -90,12 +90,11 @@
 #endif  // !Display_DISABLE_ALL
 
 #include "simple_peripheral.h"
-#include "GUA_Led.h"
 #include "GUA_Key.h"
 #include "GUA_UART.h"
 #include "GUA_Profile.h"
-#include "My_PWM.h"
 #include "My_ADC.h"
+#include <My_RGB.h>
 
 /*********************************************************************
  * CONSTANTS
@@ -724,8 +723,8 @@ static void SimpleBLEPeripheral_init(void)
   //GUA
   HCI_EXT_SetTxPowerCmd(HCI_EXT_TX_POWER_5_DBM);
 
-//  GUA_Led_Set(GUA_LED_NO_ALL, GUA_LED_MODE_ON);
-  GUA_initKeys(GUA_HandleKeys);
+  my_RGB_init();
+  my_RGB_set_colour(RGB_COLOUR_WHITE);
 
   //初始化定时器
   Util_constructClock(&GUA_periodicClock, SimpleBLECentral_GUAHandler,
@@ -1672,9 +1671,11 @@ static void GUA_HandleKeys(uint8 GUA_Keys)
 static void GUA_performPeriodicTask(void)
 {
     float SpeedValue = 0;
-    GUA_Led_Set(GUA_LED_NO_ALL, GUA_LED_MODE_TOGGLE); //LED反转
+
+    my_RGB_flash();
 
     adc_value = My_ADC_Get(adc);
+    micro_volt = ADC_convertToMicroVolts(adc, adc_value);
 
     SpeedValue = (adc_value - 777) * 1.0 / (2339 - 777);
     adc_value = SpeedValue * 10000;
