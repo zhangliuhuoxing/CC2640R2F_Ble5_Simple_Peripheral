@@ -6,6 +6,7 @@ SHELL = cmd.exe
 
 # Add inputs and outputs from these tool invocations to the build variables 
 C_SRCS += \
+../PROFILES/GUA_Profile.c \
 ../PROFILES/devinfoservice.c \
 ../PROFILES/gatt_uuid.c \
 ../PROFILES/gattservapp_util.c \
@@ -13,6 +14,7 @@ C_SRCS += \
 ../PROFILES/simple_gatt_profile.c 
 
 C_DEPS += \
+./PROFILES/GUA_Profile.d \
 ./PROFILES/devinfoservice.d \
 ./PROFILES/gatt_uuid.d \
 ./PROFILES/gattservapp_util.d \
@@ -20,6 +22,7 @@ C_DEPS += \
 ./PROFILES/simple_gatt_profile.d 
 
 OBJS += \
+./PROFILES/GUA_Profile.obj \
 ./PROFILES/devinfoservice.obj \
 ./PROFILES/gatt_uuid.obj \
 ./PROFILES/gattservapp_util.obj \
@@ -27,6 +30,7 @@ OBJS += \
 ./PROFILES/simple_gatt_profile.obj 
 
 OBJS__QUOTED += \
+"PROFILES\GUA_Profile.obj" \
 "PROFILES\devinfoservice.obj" \
 "PROFILES\gatt_uuid.obj" \
 "PROFILES\gattservapp_util.obj" \
@@ -34,6 +38,7 @@ OBJS__QUOTED += \
 "PROFILES\simple_gatt_profile.obj" 
 
 C_DEPS__QUOTED += \
+"PROFILES\GUA_Profile.d" \
 "PROFILES\devinfoservice.d" \
 "PROFILES\gatt_uuid.d" \
 "PROFILES\gattservapp_util.d" \
@@ -41,6 +46,7 @@ C_DEPS__QUOTED += \
 "PROFILES\simple_gatt_profile.d" 
 
 C_SRCS__QUOTED += \
+"../PROFILES/GUA_Profile.c" \
 "../PROFILES/devinfoservice.c" \
 "../PROFILES/gatt_uuid.c" \
 "../PROFILES/gattservapp_util.c" \

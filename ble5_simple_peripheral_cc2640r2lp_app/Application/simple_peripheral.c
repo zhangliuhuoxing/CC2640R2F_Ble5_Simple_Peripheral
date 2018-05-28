@@ -365,7 +365,7 @@ static void SimpleBLEPeripheral_handleKeys(uint8_t keys);
 #define SBP_GUA_UART_EVT Event_Id_03     //串口事件
 #define SBP_GUA_ALL_EVENTS (SBP_GUA_PERIODIC_EVT | SBP_GUA_UART_EVT) //所有事件的集合
 
-#define SBP_GUA_PERIODIC_EVT_PERIOD 20 //定时周期20ms
+#define SBP_GUA_PERIODIC_EVT_PERIOD 50 //定时周期20ms
 
 #define SBP_GUA_CHAR_CHANGE_EVT 0x0010
 

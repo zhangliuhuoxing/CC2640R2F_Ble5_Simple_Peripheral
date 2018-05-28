@@ -98,8 +98,8 @@ extern const PIN_Config BoardGpioInitTable[];
  *  Define only one symbol:
  *  CC2650EM_7ID    - Differential RF and internal biasing
                       (default for CC2640R2 LaunchPad)
- *  CC2650EM_5XD    – Differential RF and external biasing
- *  CC2650EM_4XS    – Single-ended RF on RF-P and external biasing
+ *  CC2650EM_5XD    ï¿½ Differential RF and external biasing
+ *  CC2650EM_4XS    ï¿½ Single-ended RF on RF-P and external biasing
  *  CC2640R2DK_CXS  - WCSP: Single-ended RF on RF-N and external biasing
  *                    (Note that the WCSP is only tested and characterized for
  *                     single ended configuration, and it has a WCSP-specific
@@ -114,10 +114,17 @@ extern const PIN_Config BoardGpioInitTable[];
  *      <board signal alias>                <pin mapping>
  */
 
+/* Analog Capable DIOs */
+#define CC2640R2_4XS_DIO05_ANALOG          PIN_UNASSIGNED
+#define CC2640R2_4XS_DIO06_ANALOG          PIN_UNASSIGNED
+#define CC2640R2_4XS_DIO07_ANALOG          PIN_UNASSIGNED
+#define CC2640R2_4XS_DIO08_ANALOG          IOID_8
+#define CC2640R2_4XS_DIO09_ANALOG          IOID_9
+
 /* Button Board */
-#define CC2640R2DK_4XS_KEY_SELECT                    IOID_7        	/* P1.14 */
-#define CC2640R2DK_4XS_KEY_UP                        IOID_4       	/* P1.10 */
-#define CC2640R2DK_4XS_KEY_DOWN                      IOID_3       	/* P1.12 */
+#define CC2640R2DK_4XS_KEY_SELECT                    PIN_UNASSIGNED        	/* P1.14 */
+#define CC2640R2DK_4XS_KEY_UP                        PIN_UNASSIGNED       	/* P1.10 */
+#define CC2640R2DK_4XS_KEY_DOWN                      PIN_UNASSIGNED       	/* P1.12 */
 #define CC2640R2DK_4XS_KEY_LEFT                      PIN_UNASSIGNED
 #define CC2640R2DK_4XS_KEY_RIGHT                     PIN_UNASSIGNED
 
@@ -130,8 +137,8 @@ extern const PIN_Config BoardGpioInitTable[];
 #define CC2640R2DK_4XS_PIN_LED_OFF                   0
 #define CC2640R2DK_4XS_PIN_LED1                      PIN_UNASSIGNED
 #define CC2640R2DK_4XS_PIN_LED2                      PIN_UNASSIGNED
-#define CC2640R2DK_4XS_PIN_LED3                      IOID_5          	/* P1.2  */
-#define CC2640R2DK_4XS_PIN_LED4                      IOID_6        		/* P1.4  */
+#define CC2640R2DK_4XS_PIN_LED3                      PIN_UNASSIGNED          	/* P1.2  */
+#define CC2640R2DK_4XS_PIN_LED4                      PIN_UNASSIGNED        		/* P1.4  */
 
 /* LCD  Board */
 #define CC2640R2DK_4XS_LCD_MODE                      PIN_UNASSIGNED
@@ -139,27 +146,27 @@ extern const PIN_Config BoardGpioInitTable[];
 #define CC2640R2DK_4XS_LCD_CSN                       PIN_UNASSIGNED
 
 /* SPI Board */
-#define CC2640R2DK_4XS_SPI0_MISO                     IOID_0          	/* P1.20 */
-#define CC2640R2DK_4XS_SPI0_MOSI                     IOID_9          	/* P1.18 */
-#define CC2640R2DK_4XS_SPI0_CLK                      IOID_8         	/* P1.16 */
+#define CC2640R2DK_4XS_SPI0_MISO                     PIN_UNASSIGNED          	/* P1.20 */
+#define CC2640R2DK_4XS_SPI0_MOSI                     PIN_UNASSIGNED          	/* P1.18 */
+#define CC2640R2DK_4XS_SPI0_CLK                      PIN_UNASSIGNED         	/* P1.16 */
 #define CC2640R2DK_4XS_SPI0_CSN                      PIN_UNASSIGNED
 
 /* Power Board */
 #define CC2640R2DK_4XS_3V3_EN                        PIN_UNASSIGNED
 
 /* PWM Outputs */
-#define CC2640R2DK_4XS_PWMPIN0                       CC2640R2DK_4XS_PIN_LED3
-#define CC2640R2DK_4XS_PWMPIN1                       CC2640R2DK_4XS_PIN_LED4
-#define CC2640R2DK_4XS_PWMPIN2                       PIN_UNASSIGNED
-#define CC2640R2DK_4XS_PWMPIN3                       PIN_UNASSIGNED
+#define CC2640R2DK_4XS_PWMPIN0                       IOID_0
+#define CC2640R2DK_4XS_PWMPIN1                       IOID_5
+#define CC2640R2DK_4XS_PWMPIN2                       IOID_6
+#define CC2640R2DK_4XS_PWMPIN3                       IOID_7
 #define CC2640R2DK_4XS_PWMPIN4                       PIN_UNASSIGNED
 #define CC2640R2DK_4XS_PWMPIN5                       PIN_UNASSIGNED
 #define CC2640R2DK_4XS_PWMPIN6                       PIN_UNASSIGNED
 #define CC2640R2DK_4XS_PWMPIN7                       PIN_UNASSIGNED
 
 /* UART Board */
-#define CC2640R2DK_4XS_UART_RX                       IOID_1          	/* P1.7 */
-#define CC2640R2DK_4XS_UART_TX                       IOID_2          	/* P1.9 */
+#define CC2640R2DK_4XS_UART_RX                       PIN_UNASSIGNED          	/* P1.7 */
+#define CC2640R2DK_4XS_UART_TX                       PIN_UNASSIGNED          	/* P1.9 */
 #define CC2640R2DK_4XS_UART_CTS                      PIN_UNASSIGNED
 #define CC2640R2DK_4XS_UART_RTS                      PIN_UNASSIGNED
 
@@ -169,6 +176,57 @@ extern const PIN_Config BoardGpioInitTable[];
  *  This function initializes the general board specific settings.
  */
 void CC2640R2DK_4XS_initGeneral(void);
+
+/*!
+ *  @def    CC2640R2_4XS_ADCBufName
+ *  @brief  Enum of ADCs
+ */
+typedef enum CC2640R2_4XS_ADCBufName {
+    CC2640R2_4XS_ADCBUF0 = 0,
+
+    CC2640R2_4XS_ADCBUFCOUNT
+} CC2640R2_4XS_ADCBufName;
+
+/*!
+ *  @def    CC2640R2_4XS_ADCBuf0SourceName
+ *  @brief  Enum of ADCBuf channels
+ */
+typedef enum CC2640R2_4XS_ADCBuf0ChannelName {
+    CC2640R2_4XS_ADCBUF0CHANNEL0 = 0,
+    CC2640R2_4XS_ADCBUF0CHANNEL1,
+    CC2640R2_4XS_ADCBUF0CHANNEL2,
+    CC2640R2_4XS_ADCBUF0CHANNEL3,
+    CC2640R2_4XS_ADCBUF0CHANNEL4,
+    CC2640R2_4XS_ADCBUF0CHANNEL5,
+    CC2640R2_4XS_ADCBUF0CHANNEL6,
+    CC2640R2_4XS_ADCBUF0CHANNEL7,
+    CC2640R2_4XS_ADCBUF0CHANNELVDDS,
+    CC2640R2_4XS_ADCBUF0CHANNELDCOUPL,
+    CC2640R2_4XS_ADCBUF0CHANNELVSS,
+
+    CC2640R2_4XS_ADCBUF0CHANNELCOUNT
+} CC2640R2_4XS_ADCBuf0ChannelName;
+
+/*!
+ *  @def    CC2640R2_4XS_ADCName
+ *  @brief  Enum of ADCs
+ */
+typedef enum CC2640R2_4XS_ADCName {
+    CC2640R2_4XS_ADC0 = 0,
+    CC2640R2_4XS_ADC1,
+    CC2640R2_4XS_ADC2,
+    CC2640R2_4XS_ADC3,
+    CC2640R2_4XS_ADC4,
+    CC2640R2_4XS_ADC5,
+    CC2640R2_4XS_ADC6,
+    CC2640R2_4XS_ADC7,
+    CC2640R2_4XS_ADCDCOUPL,
+    CC2640R2_4XS_ADCVSS,
+    CC2640R2_4XS_ADCVDDS,
+
+    CC2640R2_4XS_ADCCOUNT
+} CC2640R2_4XS_ADCName;
+
 
 /*!
  *  @def    CC2640R2DK_4XS_CryptoName
@@ -283,7 +341,7 @@ typedef enum CC2640R2DK_4XS_WatchdogName {
 } CC2640R2DK_4XS_WatchdogName;
 
 /*!
- *  @def    CC2650_LAUNCHXL_TRNGName
+ *  @def    CC2650_4XS_TRNGName
  *  @brief  Enum of TRNG names on the board
  */
 typedef enum CC2640R2DK_4XS_TRNGName {
