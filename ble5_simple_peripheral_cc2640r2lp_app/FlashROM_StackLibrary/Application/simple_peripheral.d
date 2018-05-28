@@ -241,6 +241,12 @@ Application/simple_peripheral.obj: D:/WorkSpace/Project/CCS/workspace_v8/CC2640R
 Application/simple_peripheral.obj: D:/WorkSpace/Project/CCS/workspace_v8/CC2640R2F_Project/CC2640R2F_Ble5_Simple_Peripheral/simplelink_cc2640r2_sdk_1_40_00_45/source/ti/ble5stack/hal/src/target/_common/hal_types.h
 Application/simple_peripheral.obj: ../Application/simple_peripheral_menu.h
 Application/simple_peripheral.obj: ../Application/simple_peripheral.h
+Application/simple_peripheral.obj: ../Application/GUA_Led.h
+Application/simple_peripheral.obj: ../Application/GUA_Key.h
+Application/simple_peripheral.obj: ../Application/GUA_UART.h
+Application/simple_peripheral.obj: D:/WorkSpace/Project/CCS/workspace_v8/CC2640R2F_Project/CC2640R2F_Ble5_Simple_Peripheral/ble5_simple_peripheral_cc2640r2lp_app/PROFILES/GUA_Profile.h
+Application/simple_peripheral.obj: ../Application/My_PWM.h
+Application/simple_peripheral.obj: ../Application/My_ADC.h
 
 ../Application/simple_peripheral.c: 
 C:/ti/ccsv8/tools/compiler/ti-cgt-arm_18.1.1.LTS/include/string.h: 
@@ -483,3 +489,9 @@ D:/WorkSpace/Project/CCS/workspace_v8/CC2640R2F_Project/CC2640R2F_Ble5_Simple_Pe
 D:/WorkSpace/Project/CCS/workspace_v8/CC2640R2F_Project/CC2640R2F_Ble5_Simple_Peripheral/simplelink_cc2640r2_sdk_1_40_00_45/source/ti/ble5stack/hal/src/target/_common/hal_types.h: 
 ../Application/simple_peripheral_menu.h: 
 ../Application/simple_peripheral.h: 
+../Application/GUA_Led.h: 
+../Application/GUA_Key.h: 
+../Application/GUA_UART.h: 
+D:/WorkSpace/Project/CCS/workspace_v8/CC2640R2F_Project/CC2640R2F_Ble5_Simple_Peripheral/ble5_simple_peripheral_cc2640r2lp_app/PROFILES/GUA_Profile.h: 
+../Application/My_PWM.h: 
+../Application/My_ADC.h: 

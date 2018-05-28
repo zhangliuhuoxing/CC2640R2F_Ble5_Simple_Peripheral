@@ -10,6 +10,11 @@ GEN_OPTS__FLAG := --cmd_file="configPkg/compiler.opt"
 GEN_CMDS__FLAG := -l"configPkg/linker.cmd"
 
 ORDERED_OBJS += \
+"./Application/GUA_Key.obj" \
+"./Application/GUA_Led.obj" \
+"./Application/GUA_UART.obj" \
+"./Application/My_ADC.obj" \
+"./Application/My_PWM.obj" \
 "./Application/board_key.obj" \
 "./Application/simple_peripheral.obj" \
 "./Application/simple_peripheral_menu.obj" \
@@ -22,6 +27,7 @@ ORDERED_OBJS += \
 "./ICall/icall_user_config.obj" \
 "./ICallBLE/ble_user_config.obj" \
 "./ICallBLE/icall_api_lite.obj" \
+"./PROFILES/GUA_Profile.obj" \
 "./PROFILES/devinfoservice.obj" \
 "./PROFILES/gatt_uuid.obj" \
 "./PROFILES/gattservapp_util.obj" \
@@ -180,7 +186,7 @@ all: $(OBJS) $(CMD_SRCS) $(GEN_CMDS)
 	@$(MAKE) --no-print-directory -Onone "ble5_simple_peripheral_cc2640r2lp_app.out"
 
 dependents:
-	-cd D:/WorkSpace/Project/CCS/workspace_v8/CC2640R2F_Project/CC2640R2F_Ble5_Simple_Peripheral/ble5_simple_peripheral_cc2640r2lp_stack_library/FlashROM_Library && $(MAKE) clean all
+	-cd D:/WorkSpace/Project/CCS/workspace_v8/CC2640R2F_Project/CC2640R2F_Ble5_Simple_Peripheral/ble5_simple_peripheral_cc2640r2lp_stack_library/FlashROM_Library && $(MAKE) all
 
 # Tool invocations
 ble5_simple_peripheral_cc2640r2lp_app.out: $(OBJS) $(CMD_SRCS) $(GEN_CMDS) D:/WorkSpace/Project/CCS/workspace_v8/CC2640R2F_Project/CC2640R2F_Ble5_Simple_Peripheral/ble5_simple_peripheral_cc2640r2lp_stack_library/FlashROM_Library/ble5_simple_peripheral_cc2640r2lp_stack_library.lib
@@ -203,8 +209,8 @@ ble5_simple_peripheral_cc2640r2lp_app.hex: $(EXE_OUTPUTS)
 clean:
 	-$(RM) $(GEN_CMDS__QUOTED)$(GEN_MISC_FILES__QUOTED)$(BIN_OUTPUTS__QUOTED)$(GEN_FILES__QUOTED)$(EXE_OUTPUTS__QUOTED)$(GEN_OPTS__QUOTED)
 	-$(RMDIR) $(GEN_MISC_DIRS__QUOTED)
-	-$(RM) "Application\board_key.obj" "Application\simple_peripheral.obj" "Application\simple_peripheral_menu.obj" "Application\two_btn_menu.obj" "Application\util.obj" "Drivers\ECC\ECCROMCC26XX.obj" "Drivers\TRNG\TRNGCC26XX.obj" "ICall\icall.obj" "ICall\icall_cc2650.obj" "ICall\icall_user_config.obj" "ICallBLE\ble_user_config.obj" "ICallBLE\icall_api_lite.obj" "PROFILES\devinfoservice.obj" "PROFILES\gatt_uuid.obj" "PROFILES\gattservapp_util.obj" "PROFILES\peripheral.obj" "PROFILES\simple_gatt_profile.obj" "Startup\board.obj" "Startup\ccfg_app_ble.obj" "Startup\main.obj" 
-	-$(RM) "Application\board_key.d" "Application\simple_peripheral.d" "Application\simple_peripheral_menu.d" "Application\two_btn_menu.d" "Application\util.d" "Drivers\ECC\ECCROMCC26XX.d" "Drivers\TRNG\TRNGCC26XX.d" "ICall\icall.d" "ICall\icall_cc2650.d" "ICall\icall_user_config.d" "ICallBLE\ble_user_config.d" "ICallBLE\icall_api_lite.d" "PROFILES\devinfoservice.d" "PROFILES\gatt_uuid.d" "PROFILES\gattservapp_util.d" "PROFILES\peripheral.d" "PROFILES\simple_gatt_profile.d" "Startup\board.d" "Startup\ccfg_app_ble.d" "Startup\main.d" 
+	-$(RM) "Application\GUA_Key.obj" "Application\GUA_Led.obj" "Application\GUA_UART.obj" "Application\My_ADC.obj" "Application\My_PWM.obj" "Application\board_key.obj" "Application\simple_peripheral.obj" "Application\simple_peripheral_menu.obj" "Application\two_btn_menu.obj" "Application\util.obj" "Drivers\ECC\ECCROMCC26XX.obj" "Drivers\TRNG\TRNGCC26XX.obj" "ICall\icall.obj" "ICall\icall_cc2650.obj" "ICall\icall_user_config.obj" "ICallBLE\ble_user_config.obj" "ICallBLE\icall_api_lite.obj" "PROFILES\GUA_Profile.obj" "PROFILES\devinfoservice.obj" "PROFILES\gatt_uuid.obj" "PROFILES\gattservapp_util.obj" "PROFILES\peripheral.obj" "PROFILES\simple_gatt_profile.obj" "Startup\board.obj" "Startup\ccfg_app_ble.obj" "Startup\main.obj" 
+	-$(RM) "Application\GUA_Key.d" "Application\GUA_Led.d" "Application\GUA_UART.d" "Application\My_ADC.d" "Application\My_PWM.d" "Application\board_key.d" "Application\simple_peripheral.d" "Application\simple_peripheral_menu.d" "Application\two_btn_menu.d" "Application\util.d" "Drivers\ECC\ECCROMCC26XX.d" "Drivers\TRNG\TRNGCC26XX.d" "ICall\icall.d" "ICall\icall_cc2650.d" "ICall\icall_user_config.d" "ICallBLE\ble_user_config.d" "ICallBLE\icall_api_lite.d" "PROFILES\GUA_Profile.d" "PROFILES\devinfoservice.d" "PROFILES\gatt_uuid.d" "PROFILES\gattservapp_util.d" "PROFILES\peripheral.d" "PROFILES\simple_gatt_profile.d" "Startup\board.d" "Startup\ccfg_app_ble.d" "Startup\main.d" 
 	-@echo 'Finished clean'
 	-@echo ' '
 
