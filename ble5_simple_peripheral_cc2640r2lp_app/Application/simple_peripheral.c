@@ -114,7 +114,7 @@
 
 // Maximum connection interval (units of 1.25ms, 800=1000ms) for automatic
 // parameter update request
-#define DEFAULT_DESIRED_MAX_CONN_INTERVAL     16
+#define DEFAULT_DESIRED_MAX_CONN_INTERVAL     80
 
 #else // FEATURE_OAD
 // Increase the the connection interval to allow for higher throughput for OAD
