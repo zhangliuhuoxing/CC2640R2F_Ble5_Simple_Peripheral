@@ -113,7 +113,7 @@
 
 // Maximum connection interval (units of 1.25ms, 800=1000ms) for automatic
 // parameter update request
-#define DEFAULT_DESIRED_MAX_CONN_INTERVAL     40
+#define DEFAULT_DESIRED_MAX_CONN_INTERVAL     80
 
 #else // FEATURE_OAD
 // Increase the the connection interval to allow for higher throughput for OAD
@@ -365,7 +365,7 @@ static void SimpleBLEPeripheral_handleKeys(uint8_t keys);
 #define SBP_GUA_UART_EVT Event_Id_03     //串口事件
 #define SBP_GUA_ALL_EVENTS (SBP_GUA_PERIODIC_EVT | SBP_GUA_UART_EVT) //所有事件的集合
 
-#define SBP_GUA_PERIODIC_EVT_PERIOD 50 //定时周期20ms
+#define SBP_GUA_PERIODIC_EVT_PERIOD 100 //定时周期20ms
 
 #define SBP_GUA_CHAR_CHANGE_EVT 0x0010
 
@@ -1671,7 +1671,6 @@ static void GUA_HandleKeys(uint8 GUA_Keys)
 static void GUA_performPeriodicTask(void)
 {
     float SpeedValue = 0;
-
     my_RGB_flash();
 
     adc_value = My_ADC_Get(adc);
