@@ -8,7 +8,8 @@ SHELL = cmd.exe
 C_SRCS += \
 ../Application/GUA_Key.c \
 ../Application/GUA_UART.c \
-../Application/My_ADC.c \
+../Application/My_Battery.c \
+../Application/My_Motor.c \
 ../Application/My_RGB.c \
 ../Application/board_key.c \
 ../Application/simple_peripheral.c \
@@ -19,7 +20,8 @@ C_SRCS += \
 C_DEPS += \
 ./Application/GUA_Key.d \
 ./Application/GUA_UART.d \
-./Application/My_ADC.d \
+./Application/My_Battery.d \
+./Application/My_Motor.d \
 ./Application/My_RGB.d \
 ./Application/board_key.d \
 ./Application/simple_peripheral.d \
@@ -30,7 +32,8 @@ C_DEPS += \
 OBJS += \
 ./Application/GUA_Key.obj \
 ./Application/GUA_UART.obj \
-./Application/My_ADC.obj \
+./Application/My_Battery.obj \
+./Application/My_Motor.obj \
 ./Application/My_RGB.obj \
 ./Application/board_key.obj \
 ./Application/simple_peripheral.obj \
@@ -41,7 +44,8 @@ OBJS += \
 OBJS__QUOTED += \
 "Application\GUA_Key.obj" \
 "Application\GUA_UART.obj" \
-"Application\My_ADC.obj" \
+"Application\My_Battery.obj" \
+"Application\My_Motor.obj" \
 "Application\My_RGB.obj" \
 "Application\board_key.obj" \
 "Application\simple_peripheral.obj" \
@@ -52,7 +56,8 @@ OBJS__QUOTED += \
 C_DEPS__QUOTED += \
 "Application\GUA_Key.d" \
 "Application\GUA_UART.d" \
-"Application\My_ADC.d" \
+"Application\My_Battery.d" \
+"Application\My_Motor.d" \
 "Application\My_RGB.d" \
 "Application\board_key.d" \
 "Application\simple_peripheral.d" \
@@ -63,7 +68,8 @@ C_DEPS__QUOTED += \
 C_SRCS__QUOTED += \
 "../Application/GUA_Key.c" \
 "../Application/GUA_UART.c" \
-"../Application/My_ADC.c" \
+"../Application/My_Battery.c" \
+"../Application/My_Motor.c" \
 "../Application/My_RGB.c" \
 "../Application/board_key.c" \
 "../Application/simple_peripheral.c" \

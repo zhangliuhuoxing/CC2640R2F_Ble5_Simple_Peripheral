@@ -135,7 +135,7 @@ static CONST gattAttrType_t simpleProfileService = { ATT_BT_UUID_SIZE, simplePro
 static uint8 simpleProfileChar1Props = GATT_PROP_READ | GATT_PROP_WRITE;
 
 // Characteristic 1 Value
-static uint8 simpleProfileChar1[SIMPLEPROFILE_CHAR1_LEN] = { 0, 0, 0, 0 , 0 };
+static uint8 simpleProfileChar1[SIMPLEPROFILE_CHAR1_LEN] = {0};
 
 // Simple Profile Characteristic 1 User Description
 static uint8 simpleProfileChar1UserDesp[17] = "Characteristic 1";
@@ -384,6 +384,7 @@ bStatus_t SimpleProfile_AddService( uint32 services )
   // Allocate Client Characteristic Configuration table
   simpleProfileChar4Config = (gattCharCfg_t *)ICall_malloc( sizeof(gattCharCfg_t) *
                                                             linkDBNumConns );
+
   if ( simpleProfileChar4Config == NULL )
   {
     return ( bleMemAllocError );
@@ -668,6 +669,29 @@ static bStatus_t simpleProfile_WriteAttrCB(uint16_t connHandle,
     switch ( uuid )
     {
       case SIMPLEPROFILE_CHAR1_UUID:
+          //Validate the value
+          // Make sure it's not a blob oper
+          if ( offset == 0 )
+          {
+            if ( len != SIMPLEPROFILE_CHAR1_LEN )
+            {
+              status = ATT_ERR_INVALID_VALUE_SIZE;
+            }
+          }
+          else
+          {
+            status = ATT_ERR_ATTR_NOT_LONG;
+          }
+
+          //Write the value
+          if ( status == SUCCESS )
+          {
+            VOID memcpy( pAttr->pValue, pValue, SIMPLEPROFILE_CHAR1_LEN );
+            notifyApp = SIMPLEPROFILE_CHAR1;
+          }
+
+
+
       case SIMPLEPROFILE_CHAR3_UUID:
 
         //Validate the value
@@ -687,12 +711,11 @@ static bStatus_t simpleProfile_WriteAttrCB(uint16_t connHandle,
         //Write the value
         if ( status == SUCCESS )
         {
-          uint8 *pCurValue = (uint8 *)pAttr->pValue;
-          *pCurValue = pValue[0];
-
+//          uint8 *pCurValue = (uint8 *)pAttr->pValue;
+//          *pCurValue = pValue[0];
           if( pAttr->pValue == &simpleProfileChar1 )
           {
-            notifyApp = SIMPLEPROFILE_CHAR1;
+//            notifyApp = SIMPLEPROFILE_CHAR1;
           }
           else
           {

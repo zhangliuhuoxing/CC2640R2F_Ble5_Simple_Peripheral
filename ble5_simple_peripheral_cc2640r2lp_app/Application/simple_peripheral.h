@@ -67,6 +67,11 @@ extern "C"
 /*********************************************************************
  * CONSTANTS
  */
+#define PACKAGE_HEAD   0xA5
+#define PACKAGE_TYPE   0x01
+
+#define PWM_MIX_DUTY   (0.4f)
+#define PWM_MAX_DUTY   (0.8f)
 
 /*********************************************************************
  * MACROS

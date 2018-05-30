@@ -93,8 +93,9 @@
 #include "GUA_Key.h"
 #include "GUA_UART.h"
 #include "GUA_Profile.h"
-#include "My_ADC.h"
 #include <My_RGB.h>
+#include <My_Battery.h>
+#include <My_Motor.h>
 
 /*********************************************************************
  * CONSTANTS
@@ -365,13 +366,34 @@ static void SimpleBLEPeripheral_handleKeys(uint8_t keys);
 #define SBP_GUA_UART_EVT Event_Id_03     //串口事件
 #define SBP_GUA_ALL_EVENTS (SBP_GUA_PERIODIC_EVT | SBP_GUA_UART_EVT) //所有事件的集合
 
-#define SBP_GUA_PERIODIC_EVT_PERIOD 100 //定时周期20ms
+#define SBP_GUA_PERIODIC_EVT_PERIOD 10 //定时周期10ms
 
 #define SBP_GUA_CHAR_CHANGE_EVT 0x0010
 
 //GUA Profile Callbacks
 static Clock_Struct GUA_periodicClock;
 static Clock_Struct GUA_UART_Clock;
+
+typedef enum _CONNECT_STATE_ {
+    CONNECT = 0,
+    DISCONNECT,
+    ERROR
+} CONNECT_STATE;
+
+typedef struct
+{
+  CONNECT_STATE connect_state;
+  uint32_t update_count;
+  uint8_t data_update_flag;
+} My_Task_Data;
+
+My_Task_Data my_task_data =
+{
+     .connect_state = DISCONNECT,
+     .update_count  = 0,
+     .data_update_flag = 0
+};
+
 
 static void GUA_HandleKeys(uint8 GUA_Keys);
 static void GUA_performPeriodicTask(void);
@@ -723,23 +745,16 @@ static void SimpleBLEPeripheral_init(void)
   //GUA
   HCI_EXT_SetTxPowerCmd(HCI_EXT_TX_POWER_5_DBM);
 
+  my_Motor_init();
+  My_Battery_init();
+
   my_RGB_init();
-  my_RGB_set_colour(RGB_COLOUR_WHITE);
+  my_RGB_set_colour(RGB_COLOUR_BLUE);
 
   //初始化定时器
   Util_constructClock(&GUA_periodicClock, SimpleBLECentral_GUAHandler,
                       SBP_GUA_PERIODIC_EVT_PERIOD, SBP_GUA_PERIODIC_EVT_PERIOD, false, SBP_GUA_PERIODIC_EVT);
   Util_startClock(&GUA_periodicClock);
-
-  //增加服务
-  GUAProfile_AddService(GATT_ALL_SERVICES);
-  //初始化特征值
-  uint8_t GUAProfile_Char1Value[GUAPROFILE_CHAR1_LEN] = {0};
-  GUAProfile_SetParameter(GUAPROFILE_CHAR1, GUAPROFILE_CHAR1_LEN, &GUAProfile_Char1Value);
-  //添加回调函数
-  VOID GUAProfile_RegisterAppCBs(&simpleBLEPeripheral_GUAProfileCBs);
-
-  My_ADC_init();
   //GUA
 }
 
@@ -1133,40 +1148,6 @@ static void SimpleBLEPeripheral_freeAttRsp(uint8_t status)
   }
 }
 
-/*********************************************************************
- * @fn      SimpleBLEPeripheral_processAppMsg
- *
- * @brief   Process an incoming callback from a profile.
- *
- * @param   pMsg - message to process
- *
- * @return  None.
- */
-//static void SimpleBLEPeripheral_processAppMsg(sbpEvt_t *pMsg)
-//{
-//  switch (pMsg->hdr.event)
-//  {
-//    case SBP_STATE_CHANGE_EVT:
-//      SimpleBLEPeripheral_processStateChangeEvt((gaprole_States_t)pMsg->
-//                                                hdr.state);
-//      break;
-//
-//    case SBP_CHAR_CHANGE_EVT:
-//      SimpleBLEPeripheral_processCharValueChangeEvt(pMsg->hdr.state);
-//      break;
-//
-//#if !defined(Display_DISABLE_ALL)
-//    case SBP_KEY_CHANGE_EVT:
-//      SimpleBLEPeripheral_handleKeys(pMsg->hdr.state);
-//      break;
-//#endif  // !Display_DISABLE_ALL
-//
-//    default:
-//      // Do nothing.
-//      break;
-//  }
-//}
-
 static void SimpleBLEPeripheral_processAppMsg(sbpEvt_t *pMsg)
 {
     switch (pMsg->hdr.event)
@@ -1258,6 +1239,7 @@ static void SimpleBLEPeripheral_processStateChangeEvt(gaprole_States_t newState)
 
     case GAPROLE_ADVERTISING:
       Display_print0(dispHandle, SBP_ROW_ROLESTATE, 0, "Advertising");
+      my_task_data.connect_state = DISCONNECT;
       break;
 
 #ifdef PLUS_BROADCASTER
@@ -1300,6 +1282,9 @@ static void SimpleBLEPeripheral_processStateChangeEvt(gaprole_States_t newState)
         // connection
         if ( linkDB_GetInfo( numActive - 1, &linkInfo ) == SUCCESS )
         {
+          //Have Connected
+          my_task_data.connect_state = CONNECT;
+
           Display_print1(dispHandle, SBP_ROW_ROLESTATE, 0, "Num Conns: %d", (uint16_t)numActive);
           Display_print0(dispHandle, SBP_ROW_STATUS_1, 0, Util_convertBdAddr2Str(linkInfo.addr));
         }
@@ -1425,6 +1410,8 @@ static void SimpleBLEPeripheral_processCharValueChangeEvt(uint8_t paramID)
   {
     case SIMPLEPROFILE_CHAR1:
       SimpleProfile_GetParameter(SIMPLEPROFILE_CHAR1, &newValue);
+
+      my_task_data.data_update_flag = 1;
 
       Display_print1(dispHandle, SBP_ROW_STATUS_1, 0, "Char 1: %d", (uint16_t)newValue);
       break;
@@ -1670,30 +1657,85 @@ static void GUA_HandleKeys(uint8 GUA_Keys)
 
 static void GUA_performPeriodicTask(void)
 {
-    float SpeedValue = 0;
-    my_RGB_flash();
+    static uint16_t timer_count = 0;
+//    float SpeedValue = 0;
+    uint8_t char1_buffer[5];
 
-    adc_value = My_ADC_Get(adc);
-    micro_volt = ADC_convertToMicroVolts(adc, adc_value);
-
-    SpeedValue = (adc_value - 777) * 1.0 / (2339 - 777);
-    adc_value = SpeedValue * 10000;
-
-    uint8_t char4_value[SIMPLEPROFILE_CHAR4_LEN] = { 0xa5, 0x01, 0, 0, 0 };
-    *(uint16_t *)(&char4_value[2]) = adc_value;
-
-    char4_value[4] = 0;
-    for(uint8_t i = 0; i < 4; i++)
+    if(my_task_data.connect_state == DISCONNECT)
     {
-        char4_value[4] ^=  char4_value[i];
+        timer_count++;
+        if(timer_count > 50)
+        {
+            timer_count = 0;
+            my_RGB_flash(RGB_COLOUR_BLUE);
+        }
+    }
+    else if(my_task_data.connect_state == CONNECT)
+    {
+        timer_count++;
+        if(timer_count > 50)
+        {
+            timer_count = 0;
+            my_RGB_flash(RGB_COLOUR_GREEN);
+        }
+
+        if(my_task_data.data_update_flag == 1)
+        {
+            my_task_data.data_update_flag = 0;
+
+            SimpleProfile_GetParameter(SIMPLEPROFILE_CHAR1, char1_buffer);
+
+            float PWM0Duty = PWM_MIX_DUTY;    //40% ~ 80% (0.4 ~ 0.8) , FRE = 400hz
+            uint8_t XORValue = 0;
+            uint16_t SpeedValue = 0;
+
+            if(char1_buffer[0] == PACKAGE_HEAD
+               && char1_buffer[1] == PACKAGE_TYPE)
+            {
+                //XOR cheak
+                for(uint8_t i = 0; i < 4; i++)
+                {
+                    XORValue ^= char1_buffer[i];
+                }
+
+                if(XORValue == char1_buffer[4])
+                {
+                    SpeedValue = *(uint16_t *)(&char1_buffer[2]);
+                    PWM0Duty = SpeedValue * 1.0 / 10000;
+
+                    PWM0Duty = PWM_MIX_DUTY + PWM_MIX_DUTY * PWM0Duty;
+
+                    if(PWM0Duty > PWM_MIX_DUTY && PWM0Duty < PWM_MAX_DUTY)
+                    {
+                        PWM_setDuty(gPWM0, (PWM_DUTY_FRACTION_MAX * PWM0Duty));
+                    }
+                }
+            }
+
+        }
+    }
+    else
+    {
+        //Deal with error
     }
 
-    static uint32_t test_count = 0;
-    test_count++;
-    Display_print1(dispHandle, 9, 0, "PHY preference: %d", test_count);
+    //电池电压监测
+    adc_value = My_Battery_Get_Voltage(adc);
+    micro_volt = ADC_convertToMicroVolts(adc, adc_value);
+    //电池电压检测
 
-    SimpleProfile_SetParameter(SIMPLEPROFILE_CHAR4, SIMPLEPROFILE_CHAR4_LEN,
-                               char4_value);
+
+//    SpeedValue = (adc_value - 777) * 1.0 / (2339 - 777);
+//    adc_value = SpeedValue * 10000;
+//
+//    uint8_t char4_value[SIMPLEPROFILE_CHAR4_LEN] = { 0xa5, 0x01, 0, 0, 0 };
+//    *(uint16_t *)(&char4_value[2]) = adc_value;
+//
+//    char4_value[4] = 0;
+//    for(uint8_t i = 0; i < 4; i++)
+//    {
+//        char4_value[4] ^=  char4_value[i];
+//    }
 }
 
 static void SimpleBLECentral_GUAHandler(UArg a0)
