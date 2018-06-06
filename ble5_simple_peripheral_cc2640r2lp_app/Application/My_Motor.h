@@ -4,7 +4,7 @@
 #include <ti/drivers/PWM.h>
 
 /*********************宏定义************************/
-#define PWM_FRE     400      //400hz
+#define PWM_FRE     50      //400hz
 
 //类型宏
 #ifndef PWM_STATUS
@@ -12,6 +12,7 @@
 #endif
 
 extern PWM_Handle gPWM0;
+extern float raw_value;
 
 PWM_STATUS my_Motor_init(void);
 

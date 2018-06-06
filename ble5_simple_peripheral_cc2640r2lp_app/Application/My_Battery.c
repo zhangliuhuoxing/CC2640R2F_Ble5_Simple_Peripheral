@@ -6,18 +6,15 @@
 #include "board.h"
 #include <ti/drivers/power/PowerCC26XX.h>
 
-ADC_Handle adc;
-
-uint16_t adc_value = 0;
-uint32_t micro_volt = 0;
+ADC_Handle battery_adc_handle;
 
 int8_t My_Battery_init(void)
 {
     ADC_Params params;
     ADC_init();
     ADC_Params_init(&params);
-    adc = ADC_open(BATTERY_ADC, &params); //Board_ADCCHANNEL_A0
-    if (adc == NULL)
+    battery_adc_handle = ADC_open(BATTERY_ADC, &params); //Board_ADCCHANNEL_A0
+    if (battery_adc_handle == NULL)
     {
         // ADC_open() failed
         return -1;

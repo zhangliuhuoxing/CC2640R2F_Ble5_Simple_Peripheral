@@ -70,8 +70,8 @@ extern "C"
 #define PACKAGE_HEAD   0xA5
 #define PACKAGE_TYPE   0x01
 
-#define PWM_MIX_DUTY   (0.4f)
-#define PWM_MAX_DUTY   (0.8f)
+#define PWM_MIX_DUTY   (0.05f)
+#define PWM_MAX_DUTY   (0.1f)
 
 /*********************************************************************
  * MACROS

@@ -96,6 +96,8 @@
 #include <My_RGB.h>
 #include <My_Battery.h>
 #include <My_Motor.h>
+#include <My_Filter.h>
+
 
 /*********************************************************************
  * CONSTANTS
@@ -110,11 +112,11 @@
 #ifndef FEATURE_OAD
 // Minimum connection interval (units of 1.25ms, 80=100ms) for automatic
 // parameter update request
-#define DEFAULT_DESIRED_MIN_CONN_INTERVAL     8
+#define DEFAULT_DESIRED_MIN_CONN_INTERVAL     8000
 
 // Maximum connection interval (units of 1.25ms, 800=1000ms) for automatic
 // parameter update request
-#define DEFAULT_DESIRED_MAX_CONN_INTERVAL     80
+#define DEFAULT_DESIRED_MAX_CONN_INTERVAL     8000
 
 #else // FEATURE_OAD
 // Increase the the connection interval to allow for higher throughput for OAD
@@ -137,7 +139,7 @@
 
 // After the connection is formed, the peripheral waits until the central
 // device asks for its preferred connection parameters
-#define DEFAULT_ENABLE_UPDATE_REQUEST         GAPROLE_LINK_PARAM_UPDATE_WAIT_REMOTE_PARAMS
+#define DEFAULT_ENABLE_UPDATE_REQUEST         FALSE   //GAPROLE_LINK_PARAM_UPDATE_REJECT_REQUEST
 
 // Connection Pause Peripheral time value (in seconds)
 #define DEFAULT_CONN_PAUSE_PERIPHERAL         6
@@ -366,7 +368,7 @@ static void SimpleBLEPeripheral_handleKeys(uint8_t keys);
 #define SBP_GUA_UART_EVT Event_Id_03     //串口事件
 #define SBP_GUA_ALL_EVENTS (SBP_GUA_PERIODIC_EVT | SBP_GUA_UART_EVT) //所有事件的集合
 
-#define SBP_GUA_PERIODIC_EVT_PERIOD 10 //定时周期10ms
+#define SBP_GUA_PERIODIC_EVT_PERIOD 5 //定时周期10ms
 
 #define SBP_GUA_CHAR_CHANGE_EVT 0x0010
 
@@ -385,13 +387,15 @@ typedef struct
   CONNECT_STATE connect_state;
   uint32_t update_count;
   uint8_t data_update_flag;
+  uint32_t battery_volt;
 } My_Task_Data;
 
 My_Task_Data my_task_data =
 {
      .connect_state = DISCONNECT,
      .update_count  = 0,
-     .data_update_flag = 0
+     .data_update_flag = 0,
+     .battery_volt = 0
 };
 
 
@@ -1655,42 +1659,51 @@ static void GUA_HandleKeys(uint8 GUA_Keys)
     }
 }
 
+//-----------------------------------------------------------
+/*
+\brief  User main process
+\parm   none
+
+\return none
+*/
+//-----------------------------------------------------------
 static void GUA_performPeriodicTask(void)
 {
-    static uint16_t timer_count = 0;
-//    float SpeedValue = 0;
-    uint8_t char1_buffer[5];
+    static uint16_t timer_count = 0;              //Time count
+    static float PWM0Duty = PWM_MIX_DUTY;    //5% ~ 10% (0.05 ~ 0.1) , FRE = 50hz
+    uint8_t XORValue = 0;
+    uint16_t SpeedValue = 0;
 
-    if(my_task_data.connect_state == DISCONNECT)
+    if(my_task_data.connect_state == DISCONNECT)  //Have not connected
     {
         timer_count++;
         if(timer_count > 50)
         {
             timer_count = 0;
             my_RGB_flash(RGB_COLOUR_BLUE);
+//            my_RGB_flash(RGB_COLOUR_RED);
         }
     }
-    else if(my_task_data.connect_state == CONNECT)
+    else if(my_task_data.connect_state == CONNECT) //Have connected
     {
         timer_count++;
         if(timer_count > 50)
         {
             timer_count = 0;
-            my_RGB_flash(RGB_COLOUR_GREEN);
         }
 
-        if(my_task_data.data_update_flag == 1)
+        if(my_task_data.data_update_flag == 1)     //Char1 data have update
         {
             my_task_data.data_update_flag = 0;
 
+            my_RGB_flash(RGB_COLOUR_GREEN);
+
+            //Get the new command value
+            uint8_t char1_buffer[5];
             SimpleProfile_GetParameter(SIMPLEPROFILE_CHAR1, char1_buffer);
 
-            float PWM0Duty = PWM_MIX_DUTY;    //40% ~ 80% (0.4 ~ 0.8) , FRE = 400hz
-            uint8_t XORValue = 0;
-            uint16_t SpeedValue = 0;
-
             if(char1_buffer[0] == PACKAGE_HEAD
-               && char1_buffer[1] == PACKAGE_TYPE)
+               && char1_buffer[1] == PACKAGE_TYPE)  //Cheak the header and data type
             {
                 //XOR cheak
                 for(uint8_t i = 0; i < 4; i++)
@@ -1698,20 +1711,17 @@ static void GUA_performPeriodicTask(void)
                     XORValue ^= char1_buffer[i];
                 }
 
+                //Update the motor pwm
                 if(XORValue == char1_buffer[4])
                 {
                     SpeedValue = *(uint16_t *)(&char1_buffer[2]);
+//                    raw_value = SpeedValue;
                     PWM0Duty = SpeedValue * 1.0 / 10000;
 
                     PWM0Duty = PWM_MIX_DUTY + PWM_MIX_DUTY * PWM0Duty;
-
-                    if(PWM0Duty > PWM_MIX_DUTY && PWM0Duty < PWM_MAX_DUTY)
-                    {
-                        PWM_setDuty(gPWM0, (PWM_DUTY_FRACTION_MAX * PWM0Duty));
-                    }
+                    raw_value = PWM0Duty;
                 }
             }
-
         }
     }
     else
@@ -1719,23 +1729,18 @@ static void GUA_performPeriodicTask(void)
         //Deal with error
     }
 
-    //电池电压监测
-    adc_value = My_Battery_Get_Voltage(adc);
-    micro_volt = ADC_convertToMicroVolts(adc, adc_value);
-    //电池电压检测
-
-
-//    SpeedValue = (adc_value - 777) * 1.0 / (2339 - 777);
-//    adc_value = SpeedValue * 10000;
-//
-//    uint8_t char4_value[SIMPLEPROFILE_CHAR4_LEN] = { 0xa5, 0x01, 0, 0, 0 };
-//    *(uint16_t *)(&char4_value[2]) = adc_value;
-//
-//    char4_value[4] = 0;
-//    for(uint8_t i = 0; i < 4; i++)
+//    if(PWM0Duty > PWM_MIX_DUTY && PWM0Duty < PWM_MAX_DUTY)
 //    {
-//        char4_value[4] ^=  char4_value[i];
+        PWM_setDuty(gPWM0, (PWM_DUTY_FRACTION_MAX * PWM0Duty));
 //    }
+
+    //Battery voltage monitoring
+    int32_t battery_adc_value = My_Battery_Get_Voltage(battery_adc_handle);
+    my_task_data.battery_volt = ADC_convertToMicroVolts(battery_adc_handle, battery_adc_value);
+    if(my_task_data.battery_volt < 50000)   //Protect the battery
+    {
+
+    }
 }
 
 static void SimpleBLECentral_GUAHandler(UArg a0)

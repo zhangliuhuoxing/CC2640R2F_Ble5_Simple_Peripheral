@@ -7,6 +7,7 @@
 #include <ti/drivers/power/PowerCC26XX.h>
 
 PWM_Handle gPWM0;
+float raw_value = 0;
 
 // Initialize the PWM driver.
 PWM_STATUS my_Motor_init(void)
@@ -32,7 +33,7 @@ PWM_STATUS my_Motor_init(void)
     }
 
     PWM_start(gPWM0);                                      // start PWM with 0% duty cycle
-    PWM_setDuty(gPWM0, (PWM_DUTY_FRACTION_MAX * 0.4f));     //
+    PWM_setDuty(gPWM0, (PWM_DUTY_FRACTION_MAX * 0.05f));   //
 
     return 0;
 }
