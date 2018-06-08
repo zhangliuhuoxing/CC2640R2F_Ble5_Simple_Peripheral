@@ -1865,6 +1865,7 @@ static void My_PasscodeCB(uint8 *deviceAddr,uint16 connectionHandle,uint8 uiInpu
 
   // Queue the event.
   SimpleBLEPeripheral_enqueueMsg(SBP_MY_PASSCODE_EVT, 0, NULL);
+  debug_s( "In passcode CB\n" );
 }
 
 static void My_PasscodeEvt(uint16 connectionHandle)

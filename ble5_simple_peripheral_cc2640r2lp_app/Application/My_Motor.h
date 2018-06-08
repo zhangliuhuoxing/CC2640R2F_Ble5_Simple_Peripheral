@@ -14,6 +14,8 @@
 extern PWM_Handle gPWM0;
 extern float raw_value;
 
+extern uint8_t test_value;
+
 PWM_STATUS my_Motor_init(void);
 
 #endif
