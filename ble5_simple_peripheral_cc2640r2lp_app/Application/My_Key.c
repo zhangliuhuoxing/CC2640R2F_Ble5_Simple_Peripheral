@@ -1,16 +1,5 @@
-#include <stdbool.h>
-#include <ti/sysbios/knl/Clock.h>
-#include <ti/sysbios/family/arm/m3/Hwi.h>
-#include <ti/sysbios/knl/Semaphore.h>
-#include <ti/sysbios/knl/Queue.h>
-#include <ti/drivers/pin/PINCC26XX.h>
-#ifdef USE_ICALL
-#include <iCall.h>
-#endif
-#include <inc/hw_ints.h>
-#include "util.h"
-#include "Board.h"
-#include "GUA_Key.h"
+#include <My_key.h>
+
 /*********************∫Í∂®“Â************************/
 #define GUA_KEY_LEFT IOID_13
 #define GUA_KEY_RIGHT IOID_14

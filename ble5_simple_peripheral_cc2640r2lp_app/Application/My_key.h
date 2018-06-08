@@ -1,5 +1,19 @@
-#ifndef _GUA_KEY_H_
-#define _GUA_KEY_H_
+#ifndef _MY_KEY_H_
+#define _MY_KEY_H_
+
+#include <stdbool.h>
+#include <ti/sysbios/knl/Clock.h>
+#include <ti/sysbios/family/arm/m3/Hwi.h>
+#include <ti/sysbios/knl/Semaphore.h>
+#include <ti/sysbios/knl/Queue.h>
+#include <ti/drivers/pin/PINCC26XX.h>
+#ifdef USE_ICALL
+#include <iCall.h>
+#endif
+#include <inc/hw_ints.h>
+#include "util.h"
+#include "Board.h"
+
 /*********************宏定义************************/
 //类型宏
 #ifndef GUA_C

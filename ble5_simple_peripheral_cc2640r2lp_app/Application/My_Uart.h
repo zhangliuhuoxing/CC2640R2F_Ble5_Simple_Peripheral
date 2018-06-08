@@ -1,9 +1,21 @@
-//**********************************************************************
-//name: GUA_UART.h
-//introduce: 串口驱动头的文件
-//**********************************************************************
-#ifndef _GUA_UART_H_
-#define _GUA_UART_H_
+/*
+ * My_Uart.h
+ *
+ *  Created on: 2018年6月6日
+ *      Author: dd
+ */
+
+#ifndef APPLICATION_MY_UART_H_
+#define APPLICATION_MY_UART_H_
+
+#include <xdc/runtime/Assert.h>
+#include <xdc/runtime/Types.h>
+#include <xdc/runtime/Log.h>
+#include <ti/sysbios/BIOS.h>
+#include "board.h"
+#include <ti/drivers/power/PowerCC26XX.h>
+#include <ti/drivers/UART.h>
+#include <ti/drivers/uart/UARTCC26XX.h>
 
 /*********************宏定义************************/
 //类型宏
@@ -51,4 +63,5 @@ nGUA_Count);
 extern void GUA_UART_Init(GUA_UART_Callback GUA_UART_ReadCallback);
 extern void GUA_UART_Send(GUA_U8* npGUA_UART_TxBuf, GUA_U8 nGUA_UART_Len);
 extern void GUA_UART_Receive(GUA_U8* npGUA_UART_RxBuf, GUA_U8 nGUA_UART_Len);
-#endif
+
+#endif /* APPLICATION_MY_UART_H_ */

@@ -1,16 +1,15 @@
+/*
+ * My_Uart.c
+ *
+ *  Created on: 2018年6月6日
+ *      Author: dd
+ */
+
 //**********************************************************************
 //name: GUA_UART.c
 //introduce: 串口驱动
 //**********************************************************************
-#include <xdc/runtime/Assert.h>
-#include <xdc/runtime/Types.h>
-#include <xdc/runtime/Log.h>
-#include <ti/sysbios/BIOS.h>
-#include "board.h"
-#include <ti/drivers/power/PowerCC26XX.h>
-#include <ti/drivers/UART.h>
-#include <ti/drivers/uart/UARTCC26XX.h>
-#include "GUA_Uart.h"
+#include <My_Uart.h>
 
 /*********************宏定义************************/
 #define GUA_UART_RX IOID_2 //接收引脚
@@ -110,3 +109,6 @@ void GUA_UART_Receive(GUA_U8* npGUA_UART_RxBuf, GUA_U8 nGUA_UART_Len)
     GUA_UART_Config[0].fxnTablePtr->readFxn(stGUA_UART_Handle, npGUA_UART_RxBuf,
     nGUA_UART_Len);
 }
+
+
+
