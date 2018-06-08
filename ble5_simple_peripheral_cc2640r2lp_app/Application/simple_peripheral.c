@@ -90,8 +90,8 @@
 #endif  // !Display_DISABLE_ALL
 
 #include "simple_peripheral.h"
-#include "GUA_Key.h"
-#include "GUA_UART.h"
+#include <My_key.h>
+#include <My_Uart.h>
 #include "GUA_Profile.h"
 #include <My_RGB.h>
 #include <My_Battery.h>
@@ -257,27 +257,15 @@ Char sbpTaskStack[SBP_TASK_STACK_SIZE];
 static uint8_t scanRspData[] =
 {
   // complete name
-  0x14,   // length of this data
+  0x08,   // length of this data
   GAP_ADTYPE_LOCAL_NAME_COMPLETE,
-  'S',
-  'i',
-  'm',
-  'p',
-  'l',
-  'e',
   'B',
-  'L',
-  'E',
-  'P',
+  'o',
+  'o',
+  's',
+  't',
   'e',
   'r',
-  'i',
-  'p',
-  'h',
-  'e',
-  'r',
-  'a',
-  'l',
 
   // connection interval range
   0x05,   // length of this data
@@ -323,7 +311,7 @@ static uint8_t advertData[] =
 };
 
 // GAP GATT Attributes
-static uint8_t attDeviceName[GAP_DEVICE_NAME_LEN] = "Peripheral";
+static uint8_t attDeviceName[GAP_DEVICE_NAME_LEN] = "Booster";
 
 // Globals used for ATT Response retransmission
 static gattMsgEvent_t *pAttRsp = NULL;
@@ -748,6 +736,7 @@ static void SimpleBLEPeripheral_init(void)
 
   //GUA
   HCI_EXT_SetTxPowerCmd(HCI_EXT_TX_POWER_5_DBM);
+  HCI_EXT_SetRxGainCmd(HCI_EXT_RX_GAIN_HIGH);
 
   my_Motor_init();
   My_Battery_init();
@@ -1667,10 +1656,11 @@ static void GUA_HandleKeys(uint8 GUA_Keys)
 \return none
 */
 //-----------------------------------------------------------
-static void GUA_performPeriodicTask(void)
+void GUA_performPeriodicTask(void)
 {
     static uint16_t timer_count = 0;              //Time count
     static float PWM0Duty = PWM_MIX_DUTY;    //5% ~ 10% (0.05 ~ 0.1) , FRE = 50hz
+    static uint16_t feed_dog_count = 0;
     uint8_t XORValue = 0;
     uint16_t SpeedValue = 0;
 
@@ -1681,8 +1671,8 @@ static void GUA_performPeriodicTask(void)
         {
             timer_count = 0;
             my_RGB_flash(RGB_COLOUR_BLUE);
-//            my_RGB_flash(RGB_COLOUR_RED);
         }
+        PWM0Duty = PWM_MIX_DUTY;
     }
     else if(my_task_data.connect_state == CONNECT) //Have connected
     {
@@ -1691,6 +1681,8 @@ static void GUA_performPeriodicTask(void)
         {
             timer_count = 0;
         }
+
+        feed_dog_count = 0;
 
         if(my_task_data.data_update_flag == 1)     //Char1 data have update
         {
@@ -1719,6 +1711,14 @@ static void GUA_performPeriodicTask(void)
                     PWM0Duty = SpeedValue * 1.0 / 10000;
 
                     PWM0Duty = PWM_MIX_DUTY + PWM_MIX_DUTY * PWM0Duty;
+                    if(PWM0Duty < PWM_MIX_DUTY)
+                    {
+                        PWM0Duty = PWM_MIX_DUTY;
+                    }
+                    else if(PWM0Duty > PWM_MAX_DUTY)
+                    {
+                        PWM0Duty = PWM_MAX_DUTY;
+                    }
                     raw_value = PWM0Duty;
                 }
             }
@@ -1729,10 +1729,22 @@ static void GUA_performPeriodicTask(void)
         //Deal with error
     }
 
-//    if(PWM0Duty > PWM_MIX_DUTY && PWM0Duty < PWM_MAX_DUTY)
-//    {
+    //Safety precautions
+    feed_dog_count++;
+    if(feed_dog_count >= 100)
+    {
+        PWM0Duty = 0;
+    }
+
+    //Update PWM
+    if(PWM0Duty >= PWM_MIX_DUTY && PWM0Duty <= PWM_MAX_DUTY)
+    {
         PWM_setDuty(gPWM0, (PWM_DUTY_FRACTION_MAX * PWM0Duty));
-//    }
+    }
+    else
+    {
+        PWM_setDuty(gPWM0, (PWM_DUTY_FRACTION_MAX * PWM_MIX_DUTY));
+    }
 
     //Battery voltage monitoring
     int32_t battery_adc_value = My_Battery_Get_Voltage(battery_adc_handle);
