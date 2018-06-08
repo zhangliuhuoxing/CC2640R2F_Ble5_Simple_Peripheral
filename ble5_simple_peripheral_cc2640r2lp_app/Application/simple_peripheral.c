@@ -216,6 +216,7 @@
 typedef struct
 {
   appEvtHdr_t hdr;  // event header.
+  uint8_t *pData;  // Event data.
 } sbpEvt_t;
 
 /*********************************************************************
@@ -339,7 +340,7 @@ static void SimpleBLEPeripheral_stateChangeCB(gaprole_States_t newState);
 #ifndef FEATURE_OAD_ONCHIP
 static void SimpleBLEPeripheral_charValueChangeCB(uint8_t paramID);
 #endif //!FEATURE_OAD_ONCHIP
-static void SimpleBLEPeripheral_enqueueMsg(uint8_t event, uint8_t state);
+static void SimpleBLEPeripheral_enqueueMsg(uint8_t event, uint8_t state, uint8_t *pData);
 
 #ifdef FEATURE_OAD
 void SimpleBLEPeripheral_processOadWriteCB(uint8_t event, uint16_t connHandle,
@@ -360,6 +361,10 @@ static void SimpleBLEPeripheral_handleKeys(uint8_t keys);
 
 #define SBP_GUA_CHAR_CHANGE_EVT 0x0010
 
+//GUA
+#define SBP_MY_PASSCODE_EVT                  0x0020    //配对事件
+#define SBP_MY_PAIRING_STATE_EVT             0x0040    //绑定事件
+
 //GUA Profile Callbacks
 static Clock_Struct GUA_periodicClock;
 static Clock_Struct GUA_UART_Clock;
@@ -369,6 +374,12 @@ typedef enum _CONNECT_STATE_ {
     DISCONNECT,
     ERROR
 } CONNECT_STATE;
+
+typedef enum
+{
+  PAIRSTATUS_PAIRED = 0,
+  PAIRSTATUS_NO_PAIRED,
+}PAIRSTATUS;
 
 typedef struct
 {
@@ -386,6 +397,7 @@ My_Task_Data my_task_data =
      .battery_volt = 0
 };
 
+static PAIRSTATUS g_pair_status = PAIRSTATUS_NO_PAIRED;  //配对状态，默认是没配对
 
 static void GUA_HandleKeys(uint8 GUA_Keys);
 static void GUA_performPeriodicTask(void);
@@ -394,6 +406,10 @@ static void GUA_UART_ReadCallback(UART_Handle nGUA_UART_Handle, void *npGUA_UART
 static void GUA_UART_PerformTask(void);
 static void GUA_Profile_ChangeCB(GUA_U8 nGUA_ParamID);
 static void GUA_Profile_CharValueChangeEvt(GUA_U8 nGUA_ParamID);
+static void My_PasscodeCB(uint8 *deviceAddr,uint16 connectionHandle,uint8 uiInputs,uint8 uiOutputs);
+static void My_PairStateCB(uint16 connHandle, uint8 state, uint8 status);
+static void My_PairStateEvt(uint8_t state, uint8_t status);
+static void My_PasscodeEvt(uint16 connectionHandle);
 
 static GUAProfileCBs_t simpleBLEPeripheral_GUAProfileCBs =
 {
@@ -422,8 +438,8 @@ static gapRolesCBs_t SimpleBLEPeripheral_gapRoleCBs =
 // is set up to only perform justworks pairing.
 static gapBondCBs_t simpleBLEPeripheral_BondMgrCBs =
 {
-  NULL, // Passcode callback
-  NULL  // Pairing / Bonding state Callback
+    My_PasscodeCB,                       //密码回调
+    My_PairStateCB                       //绑定状态回调
 };
 
 // Simple GATT Profile Callbacks
@@ -595,7 +611,7 @@ static void SimpleBLEPeripheral_init(void)
     uint32_t passkey = 0; // passkey "000000"
     // Don't send a pairing request after connecting; the peer device must
     // initiate pairing
-    uint8_t pairMode = GAPBOND_PAIRING_MODE_WAIT_FOR_REQ;
+    uint8_t pairMode = GAPBOND_PAIRING_MODE_INITIATE;  //GAPBOND_PAIRING_MODE_INITIATE
     // Use authenticated pairing: require passcode.
     uint8_t mitm = TRUE;
     // This device only has display capabilities. Therefore, it will display the
@@ -748,6 +764,8 @@ static void SimpleBLEPeripheral_init(void)
   Util_constructClock(&GUA_periodicClock, SimpleBLECentral_GUAHandler,
                       SBP_GUA_PERIODIC_EVT_PERIOD, SBP_GUA_PERIODIC_EVT_PERIOD, false, SBP_GUA_PERIODIC_EVT);
   Util_startClock(&GUA_periodicClock);
+
+  GAPBondMgr_SetParameter(GAPBOND_ERASE_ALLBONDS, 0, NULL);
   //GUA
 }
 
@@ -1164,6 +1182,20 @@ static void SimpleBLEPeripheral_processAppMsg(sbpEvt_t *pMsg)
             GUA_Profile_CharValueChangeEvt(pMsg->hdr.state);
         break;
 
+        // Passcode CB event.
+        case SBP_MY_PASSCODE_EVT:
+            My_PasscodeEvt(0);
+            test_value =22;
+        break;
+
+        // Pairing state CB event.
+        case SBP_MY_PAIRING_STATE_EVT:
+            My_PairStateEvt(pMsg->hdr.state, *pMsg->pData);
+            ICall_free(pMsg->pData);
+            test_value = test_value + 33;
+        break;
+
+
         default:
         // Do nothing.
         break;
@@ -1181,7 +1213,7 @@ static void SimpleBLEPeripheral_processAppMsg(sbpEvt_t *pMsg)
  */
 static void SimpleBLEPeripheral_stateChangeCB(gaprole_States_t newState)
 {
-  SimpleBLEPeripheral_enqueueMsg(SBP_STATE_CHANGE_EVT, newState);
+  SimpleBLEPeripheral_enqueueMsg(SBP_STATE_CHANGE_EVT, newState, NULL);
 }
 
 /*********************************************************************
@@ -1380,7 +1412,7 @@ static void SimpleBLEPeripheral_processStateChangeEvt(gaprole_States_t newState)
  */
 static void SimpleBLEPeripheral_charValueChangeCB(uint8_t paramID)
 {
-  SimpleBLEPeripheral_enqueueMsg(SBP_CHAR_CHANGE_EVT, paramID);
+  SimpleBLEPeripheral_enqueueMsg(SBP_CHAR_CHANGE_EVT, paramID, NULL);
 }
 #endif //!FEATURE_OAD_ONCHIP
 
@@ -1521,7 +1553,7 @@ static void SimpleBLEPeripheral_clockHandler(UArg arg)
  */
 void SimpleBLEPeripheral_keyChangeHandler(uint8 keys)
 {
-  SimpleBLEPeripheral_enqueueMsg(SBP_KEY_CHANGE_EVT, keys);
+  SimpleBLEPeripheral_enqueueMsg(SBP_KEY_CHANGE_EVT, keys, NULL);
 }
 #endif  // !Display_DISABLE_ALL
 
@@ -1535,7 +1567,22 @@ void SimpleBLEPeripheral_keyChangeHandler(uint8 keys)
  *
  * @return  None.
  */
-static void SimpleBLEPeripheral_enqueueMsg(uint8_t event, uint8_t state)
+//static void SimpleBLEPeripheral_enqueueMsg(uint8_t event, uint8_t state)
+//{
+//  sbpEvt_t *pMsg;
+//
+//  // Create dynamic pointer to message.
+//  if ((pMsg = ICall_malloc(sizeof(sbpEvt_t))))
+//  {
+//    pMsg->hdr.event = event;
+//    pMsg->hdr.state = state;
+//
+//    // Enqueue the message.
+//    Util_enqueueMsg(appMsgQueue, syncEvent, (uint8*)pMsg);
+//  }
+//}
+
+static void SimpleBLEPeripheral_enqueueMsg(uint8_t event, uint8_t state, uint8_t *pData)
 {
   sbpEvt_t *pMsg;
 
@@ -1544,6 +1591,7 @@ static void SimpleBLEPeripheral_enqueueMsg(uint8_t event, uint8_t state)
   {
     pMsg->hdr.event = event;
     pMsg->hdr.state = state;
+    pMsg->pData = pData;
 
     // Enqueue the message.
     Util_enqueueMsg(appMsgQueue, syncEvent, (uint8*)pMsg);
@@ -1779,7 +1827,7 @@ static void GUA_UART_PerformTask(void)
 
 static void GUA_Profile_ChangeCB(GUA_U8 nGUA_ParamID)
 {
-    SimpleBLEPeripheral_enqueueMsg(SBP_GUA_CHAR_CHANGE_EVT, nGUA_ParamID);
+    SimpleBLEPeripheral_enqueueMsg(SBP_GUA_CHAR_CHANGE_EVT, nGUA_ParamID, NULL);
 }
 
 static void GUA_Profile_CharValueChangeEvt(GUA_U8 nGUA_ParamID)
@@ -1808,6 +1856,77 @@ static void GUA_Profile_CharValueChangeEvt(GUA_U8 nGUA_ParamID)
         default:
         break;
     }
+}
+
+static void My_PasscodeCB(uint8 *deviceAddr,uint16 connectionHandle,uint8 uiInputs,uint8 uiOutputs)
+{
+  // Note:  the only parameter used here is connectionHandle, but this has
+  // already been obtained by gapConnHandle so the argument is not stored.
+
+  // Queue the event.
+  SimpleBLEPeripheral_enqueueMsg(SBP_MY_PASSCODE_EVT, 0, NULL);
+}
+
+static void My_PasscodeEvt(uint16 connectionHandle)
+{
+  uint32  passcode;
+
+  //设置密码
+  passcode = 123456;
+
+  //发送密码响应给主机
+  GAPBondMgr_PasscodeRsp( connectionHandle, SUCCESS, passcode );
+}
+
+static void My_PairStateCB(uint16 connHandle, uint8 state, uint8 status)
+{
+  uint8_t *pData;
+
+  // Note: connHandle is not used, so the variable is not stored.
+
+  // Allocate message data
+  if ((pData = ICall_malloc(sizeof(uint8_t))))
+  {
+    *pData = status;
+
+    // Queue the event.
+    SimpleBLEPeripheral_enqueueMsg(SBP_MY_PAIRING_STATE_EVT, state, pData);
+  }
+}
+
+static void My_PairStateEvt(uint8_t state, uint8_t status)
+{
+  if ( state == GAPBOND_PAIRING_STATE_STARTED )        //主机发起连接，会进入开始配对状态
+  {
+    g_pair_status = PAIRSTATUS_NO_PAIRED;
+  }
+  else if ( state == GAPBOND_PAIRING_STATE_COMPLETE )  //当主机提交密码后，会进入配对完成状态
+  {
+    if ( status == SUCCESS )                           //配对成功
+    {
+        g_pair_status = PAIRSTATUS_PAIRED;
+    }
+    else if(status == SMP_PAIRING_FAILED_UNSPECIFIED)  //已配对过
+    {
+        g_pair_status = PAIRSTATUS_PAIRED;
+    }
+    else                                               //配对失败
+    {
+        g_pair_status = PAIRSTATUS_NO_PAIRED;
+    }
+
+    if(g_pair_status == PAIRSTATUS_NO_PAIRED)            //配对失败则断开连接
+    {
+      GAPRole_TerminateConnection();
+    }
+  }
+  else if ( state == GAPBOND_PAIRING_STATE_BONDED )
+  {
+    if ( status == SUCCESS )
+    {
+
+    }
+  }
 }
 //GUA
 /*********************************************************************
