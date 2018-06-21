@@ -97,14 +97,14 @@
 #include <My_Battery.h>
 #include <My_Motor.h>
 #include <My_Filter.h>
-
+#include "My_PID.h"
 
 /*********************************************************************
  * CONSTANTS
  */
 
 // Advertising interval when device is discoverable (units of 625us, 160=100ms)
-#define DEFAULT_ADVERTISING_INTERVAL          160
+#define DEFAULT_ADVERTISING_INTERVAL          32        //20ms
 
 // General discoverable mode: advertise indefinitely
 #define DEFAULT_DISCOVERABLE_MODE             GAP_ADTYPE_FLAGS_GENERAL
@@ -396,6 +396,8 @@ My_Task_Data my_task_data =
      .data_update_flag = 0,
      .battery_volt = 0
 };
+
+PID_Regulator_t acc_pid = PID_ACC;
 
 static PAIRSTATUS g_pair_status = PAIRSTATUS_NO_PAIRED;  //配对状态，默认是没配对
 
@@ -1185,14 +1187,12 @@ static void SimpleBLEPeripheral_processAppMsg(sbpEvt_t *pMsg)
         // Passcode CB event.
         case SBP_MY_PASSCODE_EVT:
             My_PasscodeEvt(0);
-            test_value =22;
         break;
 
         // Pairing state CB event.
         case SBP_MY_PAIRING_STATE_EVT:
             My_PairStateEvt(pMsg->hdr.state, *pMsg->pData);
             ICall_free(pMsg->pData);
-            test_value = test_value + 33;
         break;
 
 
@@ -1706,7 +1706,7 @@ static void GUA_HandleKeys(uint8 GUA_Keys)
 //-----------------------------------------------------------
 void GUA_performPeriodicTask(void)
 {
-    static uint16_t timer_count = 0;              //Time count
+    static uint16_t timer_count = 0;         //Time count
     static float PWM0Duty = PWM_MIX_DUTY;    //5% ~ 10% (0.05 ~ 0.1) , FRE = 50hz
     static uint16_t feed_dog_count = 0;
     uint8_t XORValue = 0;
@@ -1730,11 +1730,10 @@ void GUA_performPeriodicTask(void)
             timer_count = 0;
         }
 
-        feed_dog_count = 0;
-
         if(my_task_data.data_update_flag == 1)     //Char1 data have update
         {
             my_task_data.data_update_flag = 0;
+            feed_dog_count = 0;
 
             my_RGB_flash(RGB_COLOUR_GREEN);
 
@@ -1767,7 +1766,6 @@ void GUA_performPeriodicTask(void)
                     {
                         PWM0Duty = PWM_MAX_DUTY;
                     }
-                    raw_value = PWM0Duty;
                 }
             }
         }
@@ -1784,14 +1782,15 @@ void GUA_performPeriodicTask(void)
         PWM0Duty = 0;
     }
 
+    acc_pid.ref = PWM0Duty;
+    acc_pid.fdb = acc_pid.output;
+
+    PID_Calc(&acc_pid);
+
     //Update PWM
-    if(PWM0Duty >= PWM_MIX_DUTY && PWM0Duty <= PWM_MAX_DUTY)
+    if(acc_pid.output >= PWM_MIX_DUTY && acc_pid.output <= PWM_MAX_DUTY)
     {
-        PWM_setDuty(gPWM0, (PWM_DUTY_FRACTION_MAX * PWM0Duty));
-    }
-    else
-    {
-        PWM_setDuty(gPWM0, (PWM_DUTY_FRACTION_MAX * PWM_MIX_DUTY));
+        PWM_setDuty(gPWM0, (PWM_DUTY_FRACTION_MAX * acc_pid.output));
     }
 
     //Battery voltage monitoring
@@ -1865,7 +1864,6 @@ static void My_PasscodeCB(uint8 *deviceAddr,uint16 connectionHandle,uint8 uiInpu
 
   // Queue the event.
   SimpleBLEPeripheral_enqueueMsg(SBP_MY_PASSCODE_EVT, 0, NULL);
-  debug_s( "In passcode CB\n" );
 }
 
 static void My_PasscodeEvt(uint16 connectionHandle)
