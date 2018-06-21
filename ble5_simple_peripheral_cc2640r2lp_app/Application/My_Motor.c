@@ -7,9 +7,6 @@
 #include <ti/drivers/power/PowerCC26XX.h>
 
 PWM_Handle gPWM0;
-float raw_value = 0;
-
-uint8_t test_value = 0;
 
 // Initialize the PWM driver.
 PWM_STATUS my_Motor_init(void)
