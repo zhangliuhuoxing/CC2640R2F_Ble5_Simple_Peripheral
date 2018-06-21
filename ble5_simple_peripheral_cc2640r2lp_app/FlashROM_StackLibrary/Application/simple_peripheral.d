@@ -307,6 +307,7 @@ Application/simple_peripheral.obj: D:/WorkSpace/Project/CCS/workspace_v8/CC2640R
 Application/simple_peripheral.obj: D:/WorkSpace/Project/CCS/workspace_v8/CC2640R2F_Project/CC2640R2F_Ble5_Simple_Peripheral/simplelink_cc2640r2_sdk_1_40_00_45/source/ti/drivers/ADC.h
 Application/simple_peripheral.obj: D:/WorkSpace/Project/CCS/workspace_v8/CC2640R2F_Project/CC2640R2F_Ble5_Simple_Peripheral/ble5_simple_peripheral_cc2640r2lp_app/Application/My_Motor.h
 Application/simple_peripheral.obj: D:/WorkSpace/Project/CCS/workspace_v8/CC2640R2F_Project/CC2640R2F_Ble5_Simple_Peripheral/ble5_simple_peripheral_cc2640r2lp_app/Application/My_Filter.h
+Application/simple_peripheral.obj: ../Application/My_PID.h
 
 ../Application/simple_peripheral.c: 
 C:/ti/ccsv8/tools/compiler/ti-cgt-arm_18.1.1.LTS/include/string.h: 
@@ -615,3 +616,4 @@ D:/WorkSpace/Project/CCS/workspace_v8/CC2640R2F_Project/CC2640R2F_Ble5_Simple_Pe
 D:/WorkSpace/Project/CCS/workspace_v8/CC2640R2F_Project/CC2640R2F_Ble5_Simple_Peripheral/simplelink_cc2640r2_sdk_1_40_00_45/source/ti/drivers/ADC.h: 
 D:/WorkSpace/Project/CCS/workspace_v8/CC2640R2F_Project/CC2640R2F_Ble5_Simple_Peripheral/ble5_simple_peripheral_cc2640r2lp_app/Application/My_Motor.h: 
 D:/WorkSpace/Project/CCS/workspace_v8/CC2640R2F_Project/CC2640R2F_Ble5_Simple_Peripheral/ble5_simple_peripheral_cc2640r2lp_app/Application/My_Filter.h: 
+../Application/My_PID.h: 

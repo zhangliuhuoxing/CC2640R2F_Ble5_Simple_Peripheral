@@ -10,6 +10,7 @@ C_SRCS += \
 ../Application/My_Filter.c \
 ../Application/My_Key.c \
 ../Application/My_Motor.c \
+../Application/My_PID.c \
 ../Application/My_RGB.c \
 ../Application/My_Ramp.c \
 ../Application/My_Uart.c \
@@ -24,6 +25,7 @@ C_DEPS += \
 ./Application/My_Filter.d \
 ./Application/My_Key.d \
 ./Application/My_Motor.d \
+./Application/My_PID.d \
 ./Application/My_RGB.d \
 ./Application/My_Ramp.d \
 ./Application/My_Uart.d \
@@ -38,6 +40,7 @@ OBJS += \
 ./Application/My_Filter.obj \
 ./Application/My_Key.obj \
 ./Application/My_Motor.obj \
+./Application/My_PID.obj \
 ./Application/My_RGB.obj \
 ./Application/My_Ramp.obj \
 ./Application/My_Uart.obj \
@@ -52,6 +55,7 @@ OBJS__QUOTED += \
 "Application\My_Filter.obj" \
 "Application\My_Key.obj" \
 "Application\My_Motor.obj" \
+"Application\My_PID.obj" \
 "Application\My_RGB.obj" \
 "Application\My_Ramp.obj" \
 "Application\My_Uart.obj" \
@@ -66,6 +70,7 @@ C_DEPS__QUOTED += \
 "Application\My_Filter.d" \
 "Application\My_Key.d" \
 "Application\My_Motor.d" \
+"Application\My_PID.d" \
 "Application\My_RGB.d" \
 "Application\My_Ramp.d" \
 "Application\My_Uart.d" \
@@ -80,6 +85,7 @@ C_SRCS__QUOTED += \
 "../Application/My_Filter.c" \
 "../Application/My_Key.c" \
 "../Application/My_Motor.c" \
+"../Application/My_PID.c" \
 "../Application/My_RGB.c" \
 "../Application/My_Ramp.c" \
 "../Application/My_Uart.c" \
