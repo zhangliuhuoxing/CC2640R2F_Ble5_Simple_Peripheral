@@ -35,6 +35,7 @@ void PID_Calc(PID_Regulator_t *pid)
     pid->componentKp = pid->kp * pid->err[0];
 
     pid->componentKi += pid->ki * pid->err[0];
+    pid->componentKiMax = pid->outputMax - pid->componentKp;
     pid->componentKi = pid->componentKi > pid->componentKiMax ? pid->componentKiMax : pid->componentKi;
     pid->componentKi = pid->componentKi < -pid->componentKiMax ? -pid->componentKiMax : pid->componentKi;
 
